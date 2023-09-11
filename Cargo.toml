@@ -1,0 +1,9 @@
+[package]
+name = "rustry"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ethers = { version = "2.0.10", features = ["ethers-solc"] }
+rstest = { version = "0.18.2" }
+async-std = { version = "1.5", features = ["attributes", "tokio1"] }
