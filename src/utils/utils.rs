@@ -1,4 +1,4 @@
-use std::path::Path;
+// use std::path::Path;
 
 // TODO have a type SomeContract that can be overriden so it works for any contract type,
 // e.g. SimpleStore only from the contracts path.
