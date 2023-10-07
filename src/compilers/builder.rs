@@ -1,16 +1,17 @@
+use super::solidity::{
+    self, OutputOption, Settings, SolcBuilder, SolcBuilderError, SolcError, SolcSources, Source,
+};
 use core::fmt;
 use std::collections::HashMap;
-use std::error::Error;
-use std::path::Display;
 
-use super::solidity::{self, SolcBuilder, SolcBuilderError, SolcError, SolcSources, Source};
-
+#[derive(Debug)]
 pub enum CompilerKinds {
     Solc,
     Vyper,
     Huff,
 }
 
+#[derive(Debug)]
 pub struct Compiler {
     pub sources: HashMap<String, String>,
     pub kind: CompilerKinds,
@@ -83,8 +84,18 @@ impl Compiler {
     pub fn run(&self) -> Result<CompilerOutput, CompilerError> {
         match self.kind {
             CompilerKinds::Solc => {
-                // let mut solc = SolcBuilder::default().bin(true).build().unwrap();
-                let mut solc = SolcBuilder::default().build().unwrap();
+                let mut solc = SolcBuilder::default()
+                    .bin(true)
+                    .settings(Some(Settings {
+                        remappings: None,
+                        output_selection: HashMap::from([(
+                            String::from("*"),
+                            HashMap::from([(String::from("*"), vec![OutputOption::EvmBytecode])]),
+                        )]),
+                    }))
+                    .build()
+                    .unwrap();
+                // let mut solc = SolcBuilder::default().build().unwrap();
                 // solc.sources = SolcSources::new(self.sources.clone());
                 solc.sources = self
                     .sources

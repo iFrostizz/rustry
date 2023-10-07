@@ -29,6 +29,22 @@ impl SolcSources {
     }
 }
 
+#[derive(Clone, Serialize)]
+pub enum OutputOption {
+    #[serde(rename = "lowercase")]
+    Metadata,
+    #[serde(rename = "evm.bytecode")]
+    EvmBytecode,
+}
+
+#[derive(Clone, Serialize)]
+pub struct Settings {
+    #[serde(skip_serializing_if = "opt_none")]
+    pub remappings: Option<Vec<String>>,
+    #[serde(rename = "outputSelection")]
+    pub output_selection: HashMap<String, HashMap<String, Vec<OutputOption>>>,
+}
+
 // https://docs.soliditylang.org/en/latest/using-the-compiler.html#input-description
 #[derive(Builder, Serialize)]
 pub struct Solc {
@@ -37,7 +53,7 @@ pub struct Solc {
     #[builder(setter(skip))]
     pub sources: HashMap<String, Source>,
     // #[serde(rename(serialize = "--bin"))]
-    #[serde(skip_serializing_if = "opt_false")]
+    #[serde(skip_serializing)]
     #[builder(default = "false")]
     pub bin: bool,
     // #[serde(rename(serialize = "--ast-compact-json"))]
@@ -48,6 +64,8 @@ pub struct Solc {
     #[serde(skip_serializing_if = "opt_false")]
     #[builder(default = "false")]
     pub asm: bool,
+    #[builder(default = "None")]
+    pub settings: Option<Settings>,
 }
 
 // https://docs.soliditylang.org/en/latest/using-the-compiler.html#output-description
@@ -85,25 +103,38 @@ pub enum Severity {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SolcCodeError {
-    #[serde(rename = "camelCase")]
+    #[serde(rename = "sourceLocation")]
     source_location: Option<SourceLocation>,
-    #[serde(rename = "camelCase")]
+    #[serde(rename = "secondarySourceLocation")]
     secondary_source_locations: Option<Vec<SourceLocation>>,
     #[serde(rename = "type")]
     err_type: ErrType,
     component: String,
     severity: Severity,
-    #[serde(rename = "camelCase")]
+    #[serde(rename = "errorCode")]
     error_code: Option<i32>,
     message: String,
-    #[serde(rename = "camelCase")]
+    #[serde(rename = "formattedMessage")]
     formatted_message: Option<String>,
-    sources: HashMap<String, String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvmOutput {
+    assembly: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Contract {
+    abi: Vec<String>,
+    metadata: String,
+    evm: EvmOutput,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SolcOut {
-    errors: Vec<SolcCodeError>,
+    errors: Option<Vec<SolcCodeError>>,
+    sources: HashMap<String, HashMap<String, i32>>,
+    contracts: Option<HashMap<String, HashMap<String, Contract>>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -129,10 +160,14 @@ fn opt_false(b: &bool) -> bool {
     !(*b)
 }
 
+fn opt_none<T>(val: &Option<T>) -> bool {
+    val.is_none()
+}
+
 impl RunCompiler for Solc {
     fn run(&self) -> Result<CompilerOutput, CompilerError> {
         let input = serde_json::to_string(&self).unwrap();
-        println!("{}", input);
+        eprintln!("{:?}", input);
 
         let mut child = Command::new("solc")
             .stdin(Stdio::piped())
@@ -144,25 +179,33 @@ impl RunCompiler for Solc {
         let child_stdin = child.stdin.as_mut().unwrap();
         child_stdin.write_all(input.as_bytes()).unwrap();
         let output = child.wait_with_output().unwrap();
+
         let stdout = output.stdout;
         let raw_out = String::from_utf8(stdout).unwrap();
 
-        let solc_out = if let Ok(solc_err) = serde_json::from_str::<SolcOut>(&raw_out) {
-            solc_err
+        if !output.status.success() {
+            return Err(SolcError {
+                message: String::from_utf8(output.stderr).unwrap(),
+            }
+            .into());
+        }
+
+        let solc_out = if let Ok(solc_out) = serde_json::from_str::<SolcOut>(&raw_out) {
+            solc_out
         } else {
             panic!("failed to deserialize solc output: {}", &raw_out);
         };
+        dbg!(&solc_out);
 
-        if !output.status.success() {
-            Err(SolcError {
-                message: String::from_utf8(output.stderr).unwrap(),
+        if let Some(errs) = solc_out.errors {
+            if !errs.is_empty() {
+                Err(SolcError {
+                    message: errs.first().unwrap().message.clone(),
+                }
+                .into())
+            } else {
+                Ok(SolcOutput {}.into())
             }
-            .into())
-        } else if !solc_out.errors.is_empty() {
-            Err(SolcError {
-                message: solc_out.errors.first().unwrap().message.clone(),
-            }
-            .into())
         } else {
             Ok(SolcOutput {}.into())
         }

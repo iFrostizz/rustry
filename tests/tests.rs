@@ -4,19 +4,8 @@ fn set_up() {
     let val = 2;
     let counter = solidity! {
         "
-        pragma solidity ^0.8.22;
-
-        contract Counter {
-            uint256 public number;
-
-            function setNumber(uint256 _number) external {
-                number = _number;
-            }
-
-            function increment() external {
-                number++;
-            }
-        }
+            // SPDX-License-Identifier: MIT
+            pragma solidity 0.8.20;
         "
     };
 }

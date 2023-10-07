@@ -99,8 +99,8 @@ pub fn rustry_test(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn solidity(input: TokenStream) -> TokenStream {
-    let source_code = input.to_string();
-    eprintln!("{:#?}", source_code);
+    let lit_str = parse_macro_input!(input as syn::LitStr);
+    let source_code = lit_str.value();
 
     let solc = Compiler {
         kind: CompilerKinds::Solc,
