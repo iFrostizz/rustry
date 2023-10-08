@@ -119,21 +119,92 @@ pub struct SolcCodeError {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EvmOutput {
-    assembly: String,
+pub struct DebugData {
+    #[serde(rename = "entryPoint")]
+    entry_point: i32,
+    id: Option<i32>,
+    #[serde(rename = "parameterSlots")]
+    parameter_slots: Option<i32>,
+    #[serde(rename = "returnSlots")]
+    return_slots: Option<i32>,
+}
+
+// TODO
+type Ast = HashMap<String, String>;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GeneratedSource {
+    ast: Ast,
+    contents: String,
+    id: i32,
+    language: String,
+    name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct BytecodeData {
+    #[serde(rename = "functionDebugData")]
+    function_debug_data: HashMap<String, DebugData>,
+    object: String,
+    opcodes: String,
+    #[serde(rename = "sourceMap")]
+    source_map: String,
+    #[serde(rename = "generatedSources")]
+    generated_sources: Vec<GeneratedSource>,
+    #[serde(rename = "linkReferences")]
+    link_references: HashMap<String, HashMap<String, Vec<SourceLocation>>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeployedBytecodeData {
+    #[serde(flatten)]
+    bytecode_data: BytecodeData,
+    #[serde(rename = "immutableReferences")]
+    immutable_references: HashMap<String, String>, // TODO
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvmOutput {
+    assembly: Option<String>,
+    #[serde(rename = "legacyAssembly")]
+    legacy_assembly: Option<HashMap<String, String>>,
+    bytecode: Option<BytecodeData>,
+    #[serde(rename = "deployedBytecode")]
+    deployed_bytecode: Option<DeployedBytecodeData>,
+    #[serde(rename = "methodIdentifiers")]
+    method_identifiers: Option<HashMap<String, String>>,
+    #[serde(rename = "gasEstimates")]
+    gas_estimates: Option<HashMap<String, HashMap<String, String>>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StorageLayout {}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Contract {
-    abi: Vec<String>,
-    metadata: String,
-    evm: EvmOutput,
+    abi: Option<Vec<String>>,
+    metadata: Option<String>,
+    #[serde(rename = "userdoc")]
+    user_doc: Option<HashMap<String, String>>,
+    #[serde(rename = "devdoc")]
+    dev_doc: Option<HashMap<String, String>>,
+    ir: Option<String>,
+    #[serde(rename = "irAst")]
+    ir_ast: Option<HashMap<String, String>>,
+    #[serde(rename = "irOptimized")]
+    ir_optimized: Option<String>,
+    #[serde(rename = "irOptimizedAst")]
+    ir_optimized_ast: Option<HashMap<String, String>>,
+    #[serde(rename = "storageLayout")]
+    storage_layout: Option<StorageLayout>,
+    evm: Option<EvmOutput>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SolcOut {
     errors: Option<Vec<SolcCodeError>>,
     sources: HashMap<String, HashMap<String, i32>>,
+    // "sourceFile.sol" { "ContractName" { ... } }
     contracts: Option<HashMap<String, HashMap<String, Contract>>>,
 }
 
@@ -182,6 +253,7 @@ impl RunCompiler for Solc {
 
         let stdout = output.stdout;
         let raw_out = String::from_utf8(stdout).unwrap();
+        eprintln!("{:?}", raw_out);
 
         if !output.status.success() {
             return Err(SolcError {

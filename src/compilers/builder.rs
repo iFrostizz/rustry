@@ -90,13 +90,14 @@ impl Compiler {
                         remappings: None,
                         output_selection: HashMap::from([(
                             String::from("*"),
-                            HashMap::from([(String::from("*"), vec![OutputOption::EvmBytecode])]),
+                            HashMap::from([(
+                                String::from("*"),
+                                vec![OutputOption::EvmBytecode, OutputOption::Metadata],
+                            )]),
                         )]),
                     }))
                     .build()
                     .unwrap();
-                // let mut solc = SolcBuilder::default().build().unwrap();
-                // solc.sources = SolcSources::new(self.sources.clone());
                 solc.sources = self
                     .sources
                     .clone()
