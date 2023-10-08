@@ -2,6 +2,7 @@ use revm::primitives::Address;
 use rustry_macros::{rustry_test, solidity};
 use rustry_test::{provider::db::Frontend, Provider};
 
+#[allow(unused)]
 fn set_up() {
     let mut provider = Provider::default();
 

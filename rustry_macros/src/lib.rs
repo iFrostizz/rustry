@@ -164,6 +164,7 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                 let fn_ret = func.outputs.iter().map(|_| 0u128);
 
                 quote! {
+                    #[allow(clippy::unused_unit)]
                     pub fn #name(
                         &self,
                         provider: &mut rustry_test::Provider,
