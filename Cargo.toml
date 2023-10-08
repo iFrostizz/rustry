@@ -1,16 +1,9 @@
-[package]
+[workspace]
+members = ["rustry_macros", "rustry_test"]
+exclude = []
+
+[workspace.package]
 name = "rustry"
 version = "0.1.0"
+authors = ["Franfran <hello@franfran.dev>"]
 edition = "2021"
-
-[lib]
-proc-macro = true
-
-[dependencies]
-syn = { version = "2.0.37", features = ["full"] }
-tokio = { version = "1.32.0", features = ["macros"] }
-proc-macro2 = "1.0.67"
-quote = "1.0.33"
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.107"
-derive_builder = "0.12.0"

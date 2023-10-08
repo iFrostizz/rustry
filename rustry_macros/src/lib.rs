@@ -2,20 +2,19 @@
 
 mod compilers;
 mod harness;
-mod utils;
-
-use std::collections::HashMap;
 
 use proc_macro::{Span, TokenStream};
 use quote::{quote, ToTokens};
+use std::collections::HashMap;
 use syn::{parse_macro_input, Error, ItemFn};
 
 use crate::compilers::builder::{BinError, Compiler, CompilerError, CompilerKinds};
+use crate::compilers::solidity::SolcOut;
 
 /// # Examples
 ///
 /// ```
-/// use rustry::rustry_test;
+/// use rustry_macros::rustry_test;
 ///
 /// fn set_up() {
 ///     // let counter = deploy_contract("src/Counter.sol:Counter");
@@ -109,9 +108,26 @@ pub fn solidity(input: TokenStream) -> TokenStream {
         kind: CompilerKinds::Solc,
         sources: HashMap::from([(String::from("source_code.sol"), source_code.clone())]),
     };
+
     match solc.run() {
         Ok(out) => {
-            dbg!(&out);
+            let solc_out = SolcOut::try_from(out).unwrap();
+            let contracts = solc_out.contracts.unwrap();
+            let contract = contracts
+                .get("source_code.sol")
+                .unwrap()
+                .get("Counter")
+                .unwrap();
+
+            let functions: Vec<_> = contract
+                .abi
+                .as_ref()
+                .unwrap()
+                .iter()
+                .filter(|entry| entry.entry_type == "function")
+                .collect();
+
+            dbg!(&functions);
             quote! {
                 0
             }

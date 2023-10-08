@@ -1,7 +1,9 @@
-use rustry::*;
+use rustry_macros::rustry_test;
+use rustry_test::Provider;
 
 fn set_up() {
     let val = 2;
+    let provider = Provider::default();
     let counter = solidity! {
         "
             // SPDX-License-Identifier: MIT

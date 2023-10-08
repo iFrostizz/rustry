@@ -97,29 +97,29 @@ pub enum Severity {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SolcCodeError {
     #[serde(rename = "sourceLocation")]
-    source_location: Option<SourceLocation>,
+    pub source_location: Option<SourceLocation>,
     #[serde(rename = "secondarySourceLocation")]
-    secondary_source_locations: Option<Vec<SourceLocation>>,
+    pub secondary_source_locations: Option<Vec<SourceLocation>>,
     #[serde(rename = "type")]
-    err_type: ErrType,
-    component: String,
-    severity: Severity,
+    pub err_type: ErrType,
+    pub component: String,
+    pub severity: Severity,
     #[serde(rename = "errorCode")]
-    error_code: Option<String>,
-    message: String,
+    pub error_code: Option<String>,
+    pub message: String,
     #[serde(rename = "formattedMessage")]
-    formatted_message: Option<String>,
+    pub formatted_message: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DebugData {
     #[serde(rename = "entryPoint")]
-    entry_point: i32,
-    id: Option<i32>,
+    pub entry_point: i32,
+    pub id: Option<i32>,
     #[serde(rename = "parameterSlots")]
-    parameter_slots: Option<i32>,
+    pub parameter_slots: Option<i32>,
     #[serde(rename = "returnSlots")]
-    return_slots: Option<i32>,
+    pub return_slots: Option<i32>,
 }
 
 // TODO
@@ -127,47 +127,47 @@ type Ast = HashMap<String, String>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GeneratedSource {
-    ast: Ast,
-    contents: String,
-    id: i32,
-    language: String,
-    name: String,
+    pub ast: Ast,
+    pub contents: String,
+    pub id: i32,
+    pub language: String,
+    pub name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BytecodeData {
     #[serde(rename = "functionDebugData")]
-    function_debug_data: HashMap<String, DebugData>,
-    object: String,
-    opcodes: String,
+    pub function_debug_data: HashMap<String, DebugData>,
+    pub object: String,
+    pub opcodes: String,
     #[serde(rename = "sourceMap")]
-    source_map: String,
+    pub source_map: String,
     #[serde(rename = "generatedSources")]
-    generated_sources: Vec<GeneratedSource>,
+    pub generated_sources: Vec<GeneratedSource>,
     #[serde(rename = "linkReferences")]
-    link_references: HashMap<String, HashMap<String, Vec<SourceLocation>>>,
+    pub link_references: HashMap<String, HashMap<String, Vec<SourceLocation>>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeployedBytecodeData {
     #[serde(flatten)]
-    bytecode_data: BytecodeData,
+    pub bytecode_data: BytecodeData,
     #[serde(rename = "immutableReferences")]
-    immutable_references: HashMap<String, String>, // TODO
+    pub immutable_references: HashMap<String, String>, // TODO
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EvmOutput {
-    assembly: Option<String>,
+    pub assembly: Option<String>,
     #[serde(rename = "legacyAssembly")]
-    legacy_assembly: Option<HashMap<String, String>>,
-    bytecode: Option<BytecodeData>,
+    pub legacy_assembly: Option<HashMap<String, String>>,
+    pub bytecode: Option<BytecodeData>,
     #[serde(rename = "deployedBytecode")]
-    deployed_bytecode: Option<DeployedBytecodeData>,
+    pub deployed_bytecode: Option<DeployedBytecodeData>,
     #[serde(rename = "methodIdentifiers")]
-    method_identifiers: Option<HashMap<String, String>>,
+    pub method_identifiers: Option<HashMap<String, String>>,
     #[serde(rename = "gasEstimates")]
-    gas_estimates: Option<HashMap<String, HashMap<String, String>>>,
+    pub gas_estimates: Option<HashMap<String, HashMap<String, String>>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -176,55 +176,66 @@ pub struct StorageLayout {}
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TypeType {
     #[serde(rename = "internalType")]
-    internal_type: String,
-    name: String,
+    pub internal_type: String,
+    pub name: String,
     #[serde(rename = "type")]
-    type_type: String,
+    pub type_type: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Abi {
-    inputs: Vec<TypeType>,
-    name: String,
-    outputs: Vec<TypeType>,
+pub struct AbiEntry {
+    pub inputs: Vec<TypeType>,
+    pub name: String,
+    pub outputs: Vec<TypeType>,
     #[serde(rename = "stateMutability")]
-    state_mutability: String,
+    pub state_mutability: String,
     #[serde(rename = "type")]
-    entry_type: String,
+    pub entry_type: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Contract {
-    abi: Option<Vec<Abi>>,
-    metadata: Option<String>,
+    pub abi: Option<Vec<AbiEntry>>,
+    pub metadata: Option<String>,
     #[serde(rename = "userdoc")]
-    user_doc: Option<HashMap<String, String>>,
+    pub user_doc: Option<HashMap<String, String>>,
     #[serde(rename = "devdoc")]
-    dev_doc: Option<HashMap<String, String>>,
-    ir: Option<String>,
+    pub dev_doc: Option<HashMap<String, String>>,
+    pub ir: Option<String>,
     #[serde(rename = "irAst")]
-    ir_ast: Option<HashMap<String, String>>,
+    pub ir_ast: Option<HashMap<String, String>>,
     #[serde(rename = "irOptimized")]
-    ir_optimized: Option<String>,
+    pub ir_optimized: Option<String>,
     #[serde(rename = "irOptimizedAst")]
-    ir_optimized_ast: Option<HashMap<String, String>>,
+    pub ir_optimized_ast: Option<HashMap<String, String>>,
     #[serde(rename = "storageLayout")]
-    storage_layout: Option<StorageLayout>,
-    evm: Option<EvmOutput>,
+    pub storage_layout: Option<StorageLayout>,
+    pub evm: Option<EvmOutput>,
 }
 
 // https://docs.soliditylang.org/en/latest/using-the-compiler.html#output-description
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SolcOut {
-    errors: Option<Vec<SolcCodeError>>,
-    sources: HashMap<String, HashMap<String, i32>>,
+    pub errors: Option<Vec<SolcCodeError>>,
+    pub sources: HashMap<String, HashMap<String, i32>>,
     // "sourceFile.sol" { "ContractName" { ... } }
-    contracts: Option<HashMap<String, HashMap<String, Contract>>>,
+    pub contracts: Option<HashMap<String, HashMap<String, Contract>>>,
 }
 
 impl From<SolcOut> for CompilerOutput {
     fn from(val: SolcOut) -> Self {
         CompilerOutput::Solc(val)
+    }
+}
+
+impl TryFrom<CompilerOutput> for SolcOut {
+    type Error = String; // TODO not very idiomatic
+
+    fn try_from(value: CompilerOutput) -> Result<SolcOut, String> {
+        match value {
+            CompilerOutput::Solc(solc_out) => Ok(solc_out),
+            _ => Err(String::from("Error with TryFrom !")),
+        }
     }
 }
 

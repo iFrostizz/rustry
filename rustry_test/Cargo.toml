@@ -1,0 +1,10 @@
+[package]
+name = "rustry_test"
+version.workspace = true
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+revm = "3.5.0"

@@ -20,6 +20,8 @@ pub struct Compiler {
 #[derive(Debug)]
 pub enum CompilerOutput {
     Solc(solidity::SolcOut),
+    Vyper,
+    Huff,
 }
 
 #[derive(Debug)]
