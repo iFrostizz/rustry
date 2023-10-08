@@ -4,7 +4,6 @@ exclude = []
 resolver = "2"
 
 [workspace.package]
-name = "rustry"
 version = "0.1.0"
 authors = ["Franfran <hello@franfran.dev>"]
 edition = "2021"

@@ -3,8 +3,11 @@
 mod compilers;
 mod harness;
 
+use derive_builder::Builder;
 use proc_macro::{Span, TokenStream};
+use proc_macro2::Ident;
 use quote::{quote, ToTokens};
+use revm::primitives::Bytecode;
 use std::collections::HashMap;
 use syn::{parse_macro_input, Error, ItemFn};
 
@@ -119,6 +122,15 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                 .get("Counter")
                 .unwrap();
 
+            let bytecode = &contract
+                .evm
+                .as_ref()
+                .unwrap()
+                .bytecode
+                .as_ref()
+                .unwrap()
+                .object;
+
             let functions: Vec<_> = contract
                 .abi
                 .as_ref()
@@ -127,9 +139,55 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                 .filter(|entry| entry.entry_type == "function")
                 .collect();
 
-            dbg!(&functions);
+            // let method_names: Vec<String> = functions.iter().map(|f| f.name.clone()).collect();
+            let impl_fns = functions.iter().map(|func| {
+                let name: proc_macro2::TokenStream = func.name.parse().unwrap();
+                quote! {
+                    pub fn #name(&self) {
+                        println!("hello, world!");
+                    }
+                }
+            });
+
             quote! {
-                0
+                {
+                    #[derive(Default, Debug)]
+                    struct ContractMethods;
+
+                    impl ContractMethods {
+                        #(
+                            #impl_fns
+                         )*
+                    }
+
+                    #[derive(Default, Debug)]
+                    struct ContractInstance {
+                        pub code: revm::primitives::Bytecode,
+                        pub methods: ContractMethods
+                    }
+
+                    impl ContractInstance {
+                        fn new(code: revm::primitives::Bytecode) -> Self {
+                            Self {
+                                code,
+                                methods: ContractMethods::default()
+                            }
+                        }
+                    }
+                    // let my_contract = ContractInstance::new(#bytecode);
+
+                    // x
+                    // ContractInstance::default()
+
+                    let as_bytes = hex::decode(#bytecode).unwrap();
+
+                    let _bytecode: revm::primitives::Bytecode = revm::primitives::Bytecode {
+                        bytecode: as_bytes.into(),
+                        state: revm::primitives::BytecodeState::Raw,
+                    };
+
+                    ContractInstance::new(_bytecode)
+                }
             }
         }
         Err(err) => match err {

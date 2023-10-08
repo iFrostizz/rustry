@@ -1052,6 +1052,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rlp"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb919243f34364b6bd2fc10ef797edbfa75f33c252e7998527479c6d6b47e1ec"
+dependencies = [
+ "bytes",
+ "rustc-hex",
+]
+
+[[package]]
 name = "ruint"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1117,8 +1127,11 @@ name = "rustry_macros"
 version = "0.1.0"
 dependencies = [
  "derive_builder",
+ "hex",
  "proc-macro2",
  "quote",
+ "revm",
+ "rustry_test",
  "serde",
  "serde_json",
  "syn 2.0.38",
@@ -1130,6 +1143,8 @@ name = "rustry_test"
 version = "0.1.0"
 dependencies = [
  "revm",
+ "rlp",
+ "tiny-keccak",
 ]
 
 [[package]]

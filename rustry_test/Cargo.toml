@@ -8,3 +8,5 @@ path = "src/lib.rs"
 
 [dependencies]
 revm = "3.5.0"
+rlp = "0.5.2"
+tiny-keccak = "2.0.2"
