@@ -1,5 +1,5 @@
 use super::solidity::{
-    self, OutputOption, Settings, SolcBuilder, SolcBuilderError, SolcError, SolcSources, Source,
+    self, OutputOption, Settings, SolcBuilder, SolcBuilderError, SolcError, Source,
 };
 use core::fmt;
 use std::collections::HashMap;

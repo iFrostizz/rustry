@@ -1,6 +1,7 @@
 [workspace]
 members = ["rustry_macros", "rustry_test"]
 exclude = []
+resolver = "2"
 
 [workspace.package]
 name = "rustry"

@@ -14,21 +14,6 @@ pub struct Source {
     pub content: String,
 }
 
-#[derive(Default, Serialize)]
-pub struct SolcSources {
-    pub sources: HashMap<String, Source>,
-}
-
-impl SolcSources {
-    pub fn new(source_content: HashMap<String, String>) -> Self {
-        let sources = source_content
-            .into_iter()
-            .map(|(file, content)| (file, Source { content }))
-            .collect();
-        SolcSources { sources }
-    }
-}
-
 #[derive(Clone, Serialize)]
 pub enum OutputOption {
     #[serde(rename = "metadata")]
