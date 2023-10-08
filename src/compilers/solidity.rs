@@ -31,10 +31,12 @@ impl SolcSources {
 
 #[derive(Clone, Serialize)]
 pub enum OutputOption {
-    #[serde(rename = "lowercase")]
+    #[serde(rename = "metadata")]
     Metadata,
     #[serde(rename = "evm.bytecode")]
     EvmBytecode,
+    #[serde(rename = "abi")]
+    Abi,
 }
 
 #[derive(Clone, Serialize)]
@@ -172,8 +174,28 @@ pub struct EvmOutput {
 pub struct StorageLayout {}
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct TypeType {
+    #[serde(rename = "internalType")]
+    internal_type: String,
+    name: String,
+    #[serde(rename = "type")]
+    type_type: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Abi {
+    inputs: Vec<TypeType>,
+    name: String,
+    outputs: Vec<TypeType>,
+    #[serde(rename = "stateMutability")]
+    state_mutability: String,
+    #[serde(rename = "type")]
+    entry_type: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Contract {
-    abi: Option<Vec<String>>,
+    abi: Option<Vec<Abi>>,
     metadata: Option<String>,
     #[serde(rename = "userdoc")]
     user_doc: Option<HashMap<String, String>>,
@@ -250,6 +272,7 @@ impl RunCompiler for Solc {
 
         let stdout = output.stdout;
         let raw_out = String::from_utf8(stdout).unwrap();
+        // dbg!(&raw_out);
 
         if !output.status.success() {
             return Err(SolcError {

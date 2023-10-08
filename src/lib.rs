@@ -110,9 +110,12 @@ pub fn solidity(input: TokenStream) -> TokenStream {
         sources: HashMap::from([(String::from("source_code.sol"), source_code.clone())]),
     };
     match solc.run() {
-        Ok(out) => quote! {
-            0
-        },
+        Ok(out) => {
+            dbg!(&out);
+            quote! {
+                0
+            }
+        }
         Err(err) => match err {
             CompilerError::BuilderError(_) => todo!(),
             CompilerError::BinError(err) => match err {

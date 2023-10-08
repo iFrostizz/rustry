@@ -17,6 +17,7 @@ pub struct Compiler {
     pub kind: CompilerKinds,
 }
 
+#[derive(Debug)]
 pub enum CompilerOutput {
     Solc(solidity::SolcOut),
 }
@@ -92,7 +93,11 @@ impl Compiler {
                             String::from("*"),
                             HashMap::from([(
                                 String::from("*"),
-                                vec![OutputOption::EvmBytecode, OutputOption::Metadata],
+                                vec![
+                                    OutputOption::EvmBytecode,
+                                    OutputOption::Metadata,
+                                    OutputOption::Abi,
+                                ],
                             )]),
                         )]),
                     }))
