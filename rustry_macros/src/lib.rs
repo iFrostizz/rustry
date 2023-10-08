@@ -163,6 +163,11 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                     #[derive(Default, Debug)]
                     struct ContractInstance {
                         pub code: revm::primitives::Bytecode,
+                    }
+
+                    #[derive(Default, Debug)]
+                    struct DeployedContract {
+                        pub address: Address,
                         pub methods: ContractMethods
                     }
 
@@ -170,14 +175,17 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                         fn new(code: revm::primitives::Bytecode) -> Self {
                             Self {
                                 code,
+                            }
+                        }
+
+                        fn deploy(self, provider: &mut rustry_test::Provider) -> DeployedContract {
+                            let address = provider.deploy(self.code).unwrap();
+                            DeployedContract {
+                                address,
                                 methods: ContractMethods::default()
                             }
                         }
                     }
-                    // let my_contract = ContractInstance::new(#bytecode);
-
-                    // x
-                    // ContractInstance::default()
 
                     let as_bytes = hex::decode(#bytecode).unwrap();
 

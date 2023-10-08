@@ -1,9 +1,9 @@
+use revm::primitives::Address;
 use rustry_macros::{rustry_test, solidity};
 use rustry_test::Provider;
 
 fn set_up() {
-    let val = 2;
-    let provider = Provider::default();
+    let mut provider = Provider::default();
 
     let counter = solidity! {
         "
@@ -24,13 +24,10 @@ fn set_up() {
         "
     };
 
-    dbg!(&counter);
-
-    // let counter = ContractInstance::new();
-    // provider.deploy(counter.code);
+    let counter = counter.deploy(&mut provider);
 }
 
 #[rustry_test(set_up)]
-fn test_thing() {
-    assert_eq!(val + 2, 4);
+fn test_deployment() {
+    assert_ne!(counter.address, Address::ZERO);
 }
