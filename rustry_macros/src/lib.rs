@@ -3,16 +3,14 @@
 mod compilers;
 mod harness;
 
-use derive_builder::Builder;
+use crate::compilers::{
+    builder::{BinError, Compiler, CompilerError, CompilerKinds},
+    solidity::{solidity::SolcOut, types::internal_to_type}, // reexport solidity or rename
+};
 use proc_macro::{Span, TokenStream};
-use proc_macro2::Ident;
 use quote::{quote, ToTokens};
-use revm::primitives::Bytecode;
 use std::collections::HashMap;
 use syn::{parse_macro_input, Error, ItemFn};
-
-use crate::compilers::builder::{BinError, Compiler, CompilerError, CompilerKinds};
-use crate::compilers::solidity::SolcOut;
 
 /// # Examples
 ///
@@ -139,12 +137,38 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                 .filter(|entry| entry.entry_type == "function")
                 .collect();
 
-            // let method_names: Vec<String> = functions.iter().map(|f| f.name.clone()).collect();
             let impl_fns = functions.iter().map(|func| {
                 let name: proc_macro2::TokenStream = func.name.parse().unwrap();
+                let inputs_w_types = func.inputs.iter().map(|input| {
+                    let iname: proc_macro2::TokenStream = input.name.clone().parse().unwrap();
+                    let itype: proc_macro2::TokenStream =
+                        internal_to_type(&input.type_type).parse().unwrap();
+                    quote! {
+                        #iname: #itype
+                    }
+                });
+
+                let outputs = func.outputs.iter().map(|output| {
+                    let otype: proc_macro2::TokenStream =
+                        internal_to_type(&output.type_type).parse().unwrap();
+                    quote! {
+                        #otype
+                    }
+                });
+
+                let fn_blocks = match func.state_mutability.as_str() {
+                    "nonpayable" => {}
+                    "view" => {}
+                    _ => unimplemented!(),
+                };
+
                 quote! {
-                    pub fn #name(&self) {
-                        println!("hello, world!");
+                    pub fn #name(
+                        &self,
+                        provider: &mut rustry_test::Provider,
+                        #(#inputs_w_types),*
+                    ) -> (#(#outputs),*) {
+                        // println!("hello, world!");
                     }
                 }
             });
@@ -162,7 +186,7 @@ pub fn solidity(input: TokenStream) -> TokenStream {
 
                     #[derive(Default, Debug)]
                     struct ContractInstance {
-                        pub code: revm::primitives::Bytecode,
+                        pub code: revm::primitives::Bytes,
                     }
 
                     #[derive(Default, Debug)]
@@ -172,7 +196,7 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                     }
 
                     impl ContractInstance {
-                        fn new(code: revm::primitives::Bytecode) -> Self {
+                        fn new(code: revm::primitives::Bytes) -> Self {
                             Self {
                                 code,
                             }
@@ -189,10 +213,7 @@ pub fn solidity(input: TokenStream) -> TokenStream {
 
                     let as_bytes = hex::decode(#bytecode).unwrap();
 
-                    let _bytecode: revm::primitives::Bytecode = revm::primitives::Bytecode {
-                        bytecode: as_bytes.into(),
-                        state: revm::primitives::BytecodeState::Raw,
-                    };
+                    let _bytecode: revm::primitives::Bytes = as_bytes.into();
 
                     ContractInstance::new(_bytecode)
                 }

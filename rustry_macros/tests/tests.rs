@@ -1,6 +1,6 @@
 use revm::primitives::Address;
 use rustry_macros::{rustry_test, solidity};
-use rustry_test::Provider;
+use rustry_test::{provider::db::Frontend, Provider};
 
 fn set_up() {
     let mut provider = Provider::default();
@@ -11,15 +11,15 @@ fn set_up() {
             pragma solidity 0.8.20;
 
             contract Counter {
-                uint256 public number;
+                // uint256 public number;
 
-                function setNumber(uint256 _number) public {
-                    number = _number;
-                }
+                // function setNumber(uint256 _number) public {
+                //     number = _number;
+                // }
 
-                function increment() public {
-                    number++;
-                }
+                // function increment() public {
+                //     number++;
+                // }
             }
         "
     };
@@ -30,4 +30,11 @@ fn set_up() {
 #[rustry_test(set_up)]
 fn test_deployment() {
     assert_ne!(counter.address, Address::ZERO);
+}
+
+#[rustry_test(set_up)]
+fn test_number() {
+    // dbg!(&counter.methods);
+    // counter.methods.increment();
+    // assert_eq!(counter.methods.number(), 0);
 }

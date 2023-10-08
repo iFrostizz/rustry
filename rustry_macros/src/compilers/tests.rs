@@ -1,4 +1,4 @@
-use super::solidity::SolcOut;
+use super::solidity::solidity::SolcOut;
 use std::{fs, path::PathBuf};
 
 #[test]

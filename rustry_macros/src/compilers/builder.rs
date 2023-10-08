@@ -1,5 +1,6 @@
-use super::solidity::{
-    self, OutputOption, Settings, SolcBuilder, SolcBuilderError, SolcError, Source,
+use super::solidity::solidity::Source;
+use crate::compilers::solidity::solidity::{
+    OutputOption, Settings, SolcBuilder, SolcBuilderError, SolcError, SolcOut,
 };
 use core::fmt;
 use std::collections::HashMap;
@@ -19,7 +20,7 @@ pub struct Compiler {
 
 #[derive(Debug)]
 pub enum CompilerOutput {
-    Solc(solidity::SolcOut),
+    Solc(SolcOut),
     Vyper,
     Huff,
 }

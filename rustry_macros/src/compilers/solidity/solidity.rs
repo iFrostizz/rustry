@@ -1,4 +1,7 @@
-use super::builder::{BinError, CompilerError, CompilerOutput, RunCompiler};
+use crate::{
+    compilers::builder::{CompilerOutput, RunCompiler},
+    BinError, CompilerError,
+};
 use core::fmt;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
