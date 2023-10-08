@@ -4,7 +4,7 @@ fn set_up() {
     let val = 2;
     let counter = solidity! {
         "
-            // SPDX-License-Identifier: MIT
+            SPDX-License-Identifier: MIT
             pragma solidity 0.8.20;
 
             contract Counter {

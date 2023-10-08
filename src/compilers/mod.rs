@@ -1,3 +1,6 @@
 pub mod builder;
 
-mod solidity;
+pub mod solidity;
+
+#[cfg(test)]
+mod tests;

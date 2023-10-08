@@ -68,15 +68,6 @@ pub struct Solc {
     pub settings: Option<Settings>,
 }
 
-// https://docs.soliditylang.org/en/latest/using-the-compiler.html#output-description
-pub struct SolcOutput {}
-
-impl From<SolcOutput> for CompilerOutput {
-    fn from(val: SolcOutput) -> Self {
-        CompilerOutput::Solc(val)
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SourceLocation {
     file: String,
@@ -112,7 +103,7 @@ pub struct SolcCodeError {
     component: String,
     severity: Severity,
     #[serde(rename = "errorCode")]
-    error_code: Option<i32>,
+    error_code: Option<String>,
     message: String,
     #[serde(rename = "formattedMessage")]
     formatted_message: Option<String>,
@@ -200,12 +191,19 @@ pub struct Contract {
     evm: Option<EvmOutput>,
 }
 
+// https://docs.soliditylang.org/en/latest/using-the-compiler.html#output-description
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SolcOut {
     errors: Option<Vec<SolcCodeError>>,
     sources: HashMap<String, HashMap<String, i32>>,
     // "sourceFile.sol" { "ContractName" { ... } }
     contracts: Option<HashMap<String, HashMap<String, Contract>>>,
+}
+
+impl From<SolcOut> for CompilerOutput {
+    fn from(val: SolcOut) -> Self {
+        CompilerOutput::Solc(val)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -238,7 +236,6 @@ fn opt_none<T>(val: &Option<T>) -> bool {
 impl RunCompiler for Solc {
     fn run(&self) -> Result<CompilerOutput, CompilerError> {
         let input = serde_json::to_string(&self).unwrap();
-        eprintln!("{:?}", input);
 
         let mut child = Command::new("solc")
             .stdin(Stdio::piped())
@@ -253,7 +250,6 @@ impl RunCompiler for Solc {
 
         let stdout = output.stdout;
         let raw_out = String::from_utf8(stdout).unwrap();
-        eprintln!("{:?}", raw_out);
 
         if !output.status.success() {
             return Err(SolcError {
@@ -267,19 +263,23 @@ impl RunCompiler for Solc {
         } else {
             panic!("failed to deserialize solc output: {}", &raw_out);
         };
-        dbg!(&solc_out);
 
-        if let Some(errs) = solc_out.errors {
+        if let Some(errs) = &solc_out.errors {
             if !errs.is_empty() {
+                let first_err = errs.first().unwrap();
+                let message = first_err
+                    .formatted_message
+                    .as_ref()
+                    .unwrap_or(&first_err.message);
                 Err(SolcError {
-                    message: errs.first().unwrap().message.clone(),
+                    message: message.to_string(),
                 }
                 .into())
             } else {
-                Ok(SolcOutput {}.into())
+                Ok(solc_out.into())
             }
         } else {
-            Ok(SolcOutput {}.into())
+            Ok(solc_out.into())
         }
     }
 }

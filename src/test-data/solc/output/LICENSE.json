@@ -1,0 +1,19 @@
+{
+  "errors":[
+    {
+      "component":"general",
+      "errorCode":"2314",
+      "formattedMessage":"ParserError: Expected identifier but got '-'\n --> source_code.sol:2:17:\n  |\n2 |             SPDX-License-Identifier: MIT\n  |                 ^\n\n",
+      "message":"Expected identifier but got '-'",
+      "severity":"error",
+      "sourceLocation":
+      {
+        "end":18,
+        "file":"source_code.sol",
+        "start":17
+      },
+      "type":"ParserError"
+    }
+  ],
+  "sources":{}
+}

@@ -61,4 +61,4 @@
 //     // assert_eq!(number, to_store);
 // }
 
-// fn main() {}
+fn main() {}

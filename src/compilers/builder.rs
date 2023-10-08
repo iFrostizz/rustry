@@ -18,7 +18,7 @@ pub struct Compiler {
 }
 
 pub enum CompilerOutput {
-    Solc(solidity::SolcOutput),
+    Solc(solidity::SolcOut),
 }
 
 #[derive(Debug)]

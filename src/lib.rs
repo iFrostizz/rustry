@@ -15,22 +15,24 @@ use crate::compilers::builder::{BinError, Compiler, CompilerError, CompilerKinds
 /// # Examples
 ///
 /// ```
+/// use rustry::rustry_test;
+///
 /// fn set_up() {
-///     counter = deploy_contract("src/Counter.sol:Counter");
+///     // let counter = deploy_contract("src/Counter.sol:Counter");
 /// }
 ///
 /// #[rustry_test(set_up)]
 /// fn test_increment() {
 ///     // if annotated with `#[rustry_test]` and that there is a set_up function,
 ///     // the content of the `set_up` will be copy/pasted to each rustry_test.
-///     counter.increment().send().await;
-///     assertEq(counter.number(), 1);
+///     // counter.increment().send().await;
+///     // assert_eq!(counter.number(), 1);
 /// }
 ///
 /// #[rustry_test(set_up)]
 /// fn testFuzz_set_number(x: U256) {
-///     counter.setNumber(x).send().await;
-///     assertEq(counter.number(), x);
+///     // counter.setNumber(x).send().await;
+///     // assert_eq!(counter.number(), x);
 /// }
 /// ```
 #[proc_macro_attribute]
@@ -97,6 +99,7 @@ pub fn rustry_test(args: TokenStream, input: TokenStream) -> TokenStream {
     .into()
 }
 
+// TODO figure out the source mappings
 #[proc_macro]
 pub fn solidity(input: TokenStream) -> TokenStream {
     let lit_str = parse_macro_input!(input as syn::LitStr);
@@ -106,19 +109,18 @@ pub fn solidity(input: TokenStream) -> TokenStream {
         kind: CompilerKinds::Solc,
         sources: HashMap::from([(String::from("source_code.sol"), source_code.clone())]),
     };
-    if let Err(err) = solc.run() {
-        match err {
+    match solc.run() {
+        Ok(out) => quote! {
+            0
+        },
+        Err(err) => match err {
             CompilerError::BuilderError(_) => todo!(),
             CompilerError::BinError(err) => match err {
                 BinError::Solc(solc_err) => {
                     Error::new_spanned(source_code, solc_err.message).to_compile_error()
                 }
             },
-        }
-    } else {
-        quote! {
-            0
-        }
+        },
     }
     .into()
 }
