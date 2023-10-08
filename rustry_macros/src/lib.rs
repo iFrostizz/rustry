@@ -156,11 +156,12 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                     }
                 });
 
-                let fn_blocks = match func.state_mutability.as_str() {
-                    "nonpayable" => {}
-                    "view" => {}
+                let fn_call = match func.state_mutability.as_str() {
+                    "nonpayable" => proc_macro2::TokenStream::new(),
+                    "view" => proc_macro2::TokenStream::new(),
                     _ => unimplemented!(),
                 };
+                let fn_ret = func.outputs.iter().map(|_| 0u128);
 
                 quote! {
                     pub fn #name(
@@ -168,7 +169,9 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                         provider: &mut rustry_test::Provider,
                         #(#inputs_w_types),*
                     ) -> (#(#outputs),*) {
-                        // println!("hello, world!");
+                        #fn_call
+
+                        (#(#fn_ret),*)
                     }
                 }
             });

@@ -11,15 +11,15 @@ fn set_up() {
             pragma solidity 0.8.20;
 
             contract Counter {
-                // uint256 public number;
+                uint256 public number;
 
-                // function setNumber(uint256 _number) public {
-                //     number = _number;
-                // }
+                function setNumber(uint256 _number) public {
+                    number = _number;
+                }
 
-                // function increment() public {
-                //     number++;
-                // }
+                function increment() public {
+                    number++;
+                }
             }
         "
     };
@@ -34,7 +34,6 @@ fn test_deployment() {
 
 #[rustry_test(set_up)]
 fn test_number() {
-    // dbg!(&counter.methods);
-    // counter.methods.increment();
-    // assert_eq!(counter.methods.number(), 0);
+    counter.methods.increment(&mut provider);
+    assert_eq!(counter.methods.number(&mut provider), 0);
 }
