@@ -34,10 +34,10 @@ impl Huffc {
 
 #[derive(Debug, Deserialize)]
 pub struct HuffFile {
-    path: String,
-    source: String,
-    access: Option<String>,    // TODO
-    dependencies: Vec<String>, // TODO
+    pub path: String,
+    pub source: String,
+    pub access: Option<String>,    // TODO
+    pub dependencies: Vec<String>, // TODO
 }
 
 #[derive(Debug, Deserialize)]
@@ -51,28 +51,39 @@ pub struct Errors {}
 
 #[derive(Debug, Deserialize)]
 pub struct HuffAbi {
-    constructor: Option<String>,
+    pub constructor: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    functions: Option<Functions>,
+    pub functions: Option<Functions>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    events: Option<Events>,
+    pub events: Option<Events>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    errors: Option<Errors>,
-    receive: bool,
-    fallback: bool,
+    pub errors: Option<Errors>,
+    pub receive: bool,
+    pub fallback: bool,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct HuffOut {
-    file: HuffFile,
-    bytecode: String,
-    runtime: String,
-    abi: HuffAbi,
+pub struct HuffcOut {
+    pub file: HuffFile,
+    pub bytecode: String,
+    pub runtime: String,
+    pub abi: HuffAbi,
 }
 
-impl From<HuffOut> for CompilerOutput {
-    fn from(val: HuffOut) -> Self {
+impl From<HuffcOut> for CompilerOutput {
+    fn from(val: HuffcOut) -> Self {
         CompilerOutput::Huff(val)
+    }
+}
+
+impl TryFrom<CompilerOutput> for HuffcOut {
+    type Error = String; // TODO not very idiomatic
+
+    fn try_from(value: CompilerOutput) -> Result<HuffcOut, String> {
+        match value {
+            CompilerOutput::Huff(huffc_out) => Ok(huffc_out),
+            _ => Err(String::from("Error with TryFrom !")),
+        }
     }
 }
 
@@ -95,7 +106,7 @@ impl RunCompiler for Huffc {
 
         let out_content = fs::read_to_string(&self.output).unwrap();
         println!("{}", serde_json::to_string_pretty(&out_content).unwrap());
-        let huffc_out = if let Ok(huffc_out) = serde_json::from_str::<HuffOut>(&out_content) {
+        let huffc_out = if let Ok(huffc_out) = serde_json::from_str::<HuffcOut>(&out_content) {
             huffc_out
         } else {
             panic!("failed to deserialize huffc output: {}", &out_content);

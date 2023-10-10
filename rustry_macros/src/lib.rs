@@ -10,8 +10,10 @@ use crate::compilers::{
 };
 use proc_macro::{Span, TokenStream};
 use quote::{quote, ToTokens};
-use std::collections::HashMap;
+use std::{collections::HashMap, iter};
 use syn::{parse_macro_input, Error, ItemFn};
+
+use self::compilers::{huff::huffc::HuffcOut, solidity::solc::AbiEntry};
 
 /// # Examples
 ///
@@ -178,51 +180,7 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                 }
             });
 
-            quote! {
-                {
-                    #[derive(Default, Debug)]
-                    struct ContractMethods;
-
-                    impl ContractMethods {
-                        #(
-                            #impl_fns
-                         )*
-                    }
-
-                    #[derive(Default, Debug)]
-                    struct ContractInstance {
-                        pub code: revm::primitives::Bytes,
-                    }
-
-                    #[derive(Default, Debug)]
-                    struct DeployedContract {
-                        pub address: Address,
-                        pub methods: ContractMethods
-                    }
-
-                    impl ContractInstance {
-                        fn new(code: revm::primitives::Bytes) -> Self {
-                            Self {
-                                code,
-                            }
-                        }
-
-                        fn deploy(self, provider: &mut rustry_test::Provider) -> DeployedContract {
-                            let address = provider.deploy(self.code).unwrap();
-                            DeployedContract {
-                                address,
-                                methods: ContractMethods::default()
-                            }
-                        }
-                    }
-
-                    let as_bytes = hex::decode(#bytecode).unwrap();
-
-                    let _bytecode: revm::primitives::Bytes = as_bytes.into();
-
-                    ContractInstance::new(_bytecode)
-                }
-            }
+            make_contract_instance(impl_fns, bytecode)
         }
         Err(err) => match err {
             CompilerError::BuilderError(_) => todo!(),
@@ -245,10 +203,15 @@ pub fn huff(input: TokenStream) -> TokenStream {
         kind: CompilerKinds::Huff,
         sources: HashMap::from([(String::from("source_code.sol"), source_code.clone())]),
     };
-    let output = huffc.run().unwrap();
 
-    quote! {
-        0
+    match huffc.run() {
+        Ok(out) => {
+            let huffc_out = HuffcOut::try_from(out).unwrap();
+            let bytecode = huffc_out.bytecode;
+
+            make_contract_instance(iter::empty::<proc_macro2::TokenStream>(), &bytecode)
+        }
+        Err(err) => panic!("{:?}", err),
     }
     .into()
 }
@@ -256,5 +219,56 @@ pub fn huff(input: TokenStream) -> TokenStream {
 fn default_set_up() -> proc_macro2::TokenStream {
     quote! {
         let provider = 0;
+    }
+}
+
+fn make_contract_instance(
+    impl_fns: impl Iterator<Item = proc_macro2::TokenStream>,
+    bytecode: &String,
+) -> proc_macro2::TokenStream {
+    quote! {
+        {
+            #[derive(Default, Debug)]
+            struct ContractMethods;
+
+            impl ContractMethods {
+                #(
+                    #impl_fns
+                 )*
+            }
+
+            #[derive(Default, Debug)]
+            struct ContractInstance {
+                pub code: revm::primitives::Bytes,
+            }
+
+            #[derive(Default, Debug)]
+            struct DeployedContract {
+                pub address: Address,
+                pub methods: ContractMethods
+            }
+
+            impl ContractInstance {
+                fn new(code: revm::primitives::Bytes) -> Self {
+                    Self {
+                        code,
+                    }
+                }
+
+                fn deploy(self, provider: &mut rustry_test::Provider) -> DeployedContract {
+                    let address = provider.deploy(self.code).unwrap();
+                    DeployedContract {
+                        address,
+                        methods: ContractMethods::default()
+                    }
+                }
+            }
+
+            let as_bytes = hex::decode(#bytecode).unwrap();
+
+            let _bytecode: revm::primitives::Bytes = as_bytes.into();
+
+            ContractInstance::new(_bytecode)
+        }
     }
 }

@@ -1,4 +1,4 @@
-use super::huff::huffc::HuffOut;
+use super::huff::huffc::HuffcOut;
 use super::solidity::solc::SolcOut;
 use std::{fs, path::PathBuf};
 
@@ -22,6 +22,6 @@ fn deserialize_huffc_output() {
     for dir_entry in fs::read_dir(d).unwrap() {
         let file = dir_entry.unwrap().path();
         let content = fs::read_to_string(file).unwrap();
-        serde_json::from_str::<HuffOut>(&content).unwrap();
+        serde_json::from_str::<HuffcOut>(&content).unwrap();
     }
 }

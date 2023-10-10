@@ -8,7 +8,7 @@ use core::fmt;
 use std::{collections::HashMap, fs::File, io::Write};
 use tempfile::tempdir;
 
-use super::huff::huffc::HuffOut;
+use super::huff::huffc::HuffcOut;
 
 #[derive(Debug)]
 pub enum CompilerKinds {
@@ -27,7 +27,7 @@ pub struct Compiler {
 pub enum CompilerOutput {
     Solc(SolcOut),
     Vyper,
-    Huff(HuffOut),
+    Huff(HuffcOut),
 }
 
 #[derive(Debug)]

@@ -1,6 +1,6 @@
 use revm::primitives::Address;
 use rustry_macros::{huff, rustry_test};
-use rustry_test::Provider;
+use rustry_test::{provider::db::Frontend, Provider};
 
 fn set_up() {
     let mut provider = Provider::default();
@@ -15,6 +15,8 @@ fn set_up() {
             }
         "
     };
+
+    let non_payable = non_payable.deploy(&mut provider);
 }
 
 #[rustry_test(set_up)]
