@@ -1,9 +1,14 @@
-use super::solidity::solidity::Source;
-use crate::compilers::solidity::solidity::{
-    OutputOption, Settings, SolcBuilder, SolcBuilderError, SolcError, SolcOut,
+use crate::compilers::{
+    huff::huffc::HuffcBuilder,
+    solidity::solc::{
+        OutputOption, Settings, SolcBuilder, SolcBuilderError, SolcError, SolcOut, Source,
+    },
 };
 use core::fmt;
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::File, io::Write};
+use tempfile::tempdir;
+
+use super::huff::huffc::HuffOut;
 
 #[derive(Debug)]
 pub enum CompilerKinds {
@@ -22,7 +27,7 @@ pub struct Compiler {
 pub enum CompilerOutput {
     Solc(SolcOut),
     Vyper,
-    Huff,
+    Huff(HuffOut),
 }
 
 #[derive(Debug)]
@@ -114,8 +119,28 @@ impl Compiler {
                     .collect();
                 solc.run()
             }
+            CompilerKinds::Huff => {
+                let dir = tempdir().unwrap(); // deleted when the destructor is ran
+                let input = dir.path().join("input.huff");
+                let input = input.into_os_string().into_string().unwrap();
+                let mut file = File::create(input.clone()).unwrap();
+                let content = self.sources.iter().next().unwrap().1;
+                writeln!(file, "{}", content).unwrap();
+                let output = dir.path().join("output.json");
+                File::create(output.clone()).unwrap();
+                let output = output.into_os_string().into_string().unwrap();
+
+                let mut huffc = HuffcBuilder::default()
+                    .artifacts(true)
+                    .input(input)
+                    .output(output)
+                    .build()
+                    .unwrap();
+                huffc.attach_dir(dir);
+
+                huffc.run()
+            }
             CompilerKinds::Vyper => todo!(),
-            CompilerKinds::Huff => todo!(),
         }
     }
 }

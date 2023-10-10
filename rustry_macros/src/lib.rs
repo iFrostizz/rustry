@@ -1,11 +1,12 @@
 #![feature(proc_macro_span)]
 
+mod common;
 mod compilers;
 mod harness;
 
 use crate::compilers::{
     builder::{BinError, Compiler, CompilerError, CompilerKinds},
-    solidity::{solidity::SolcOut, types::internal_to_type}, // reexport solidity or rename
+    solidity::{solc::SolcOut, types::internal_to_type}, // reexport solidity or rename
 };
 use proc_macro::{Span, TokenStream};
 use quote::{quote, ToTokens};
@@ -231,6 +232,23 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                 }
             },
         },
+    }
+    .into()
+}
+
+#[proc_macro]
+pub fn huff(input: TokenStream) -> TokenStream {
+    let lit_str = parse_macro_input!(input as syn::LitStr);
+    let source_code = lit_str.value();
+
+    let huffc = Compiler {
+        kind: CompilerKinds::Huff,
+        sources: HashMap::from([(String::from("source_code.sol"), source_code.clone())]),
+    };
+    let output = huffc.run().unwrap();
+
+    quote! {
+        0
     }
     .into()
 }

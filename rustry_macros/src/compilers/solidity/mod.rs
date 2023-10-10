@@ -1,2 +1,2 @@
-pub mod solidity;
+pub mod solc;
 pub mod types;

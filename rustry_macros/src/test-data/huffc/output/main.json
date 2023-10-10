@@ -1,0 +1,18 @@
+{
+  "file": {
+    "path": "/tmp/.tmprDyXYs/input.huff",
+    "source": "\n            #define macro MAIN() = takes(0) returns(0) {\n                callvalue iszero no_value jumpi\n                0x00 0x00 revert\n                no_value:\n                    stop\n            }\n        \n",
+    "access": null,
+    "dependencies": []
+  },
+  "bytecode": "600b8060093d393df33415610009575f5ffd5b00",
+  "runtime": "3415610009575f5ffd5b00",
+  "abi": {
+    "constructor": null,
+    "functions": {},
+    "events": {},
+    "errors": {},
+    "receive": false,
+    "fallback": false
+  }
+}

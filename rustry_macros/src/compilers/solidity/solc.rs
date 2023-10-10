@@ -1,4 +1,5 @@
 use crate::{
+    common::utils::opt_false,
     compilers::builder::{CompilerOutput, RunCompiler},
     BinError, CompilerError,
 };
@@ -246,10 +247,6 @@ impl fmt::Display for SolcError {
     }
 }
 
-fn opt_false(b: &bool) -> bool {
-    !(*b)
-}
-
 fn opt_none<T>(val: &Option<T>) -> bool {
     val.is_none()
 }
@@ -271,7 +268,6 @@ impl RunCompiler for Solc {
 
         let stdout = output.stdout;
         let raw_out = String::from_utf8(stdout).unwrap();
-        // dbg!(&raw_out);
 
         if !output.status.success() {
             return Err(SolcError {

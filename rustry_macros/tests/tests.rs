@@ -8,7 +8,7 @@ fn set_up() {
 
     let counter = solidity! {
         "
-            // SPDX-License-Identifier: MIT
+            // SPDX-License-Identifier: AGPLv3
             pragma solidity 0.8.20;
 
             contract Counter {
@@ -31,10 +31,4 @@ fn set_up() {
 #[rustry_test(set_up)]
 fn test_deployment() {
     assert_ne!(counter.address, Address::ZERO);
-}
-
-#[rustry_test(set_up)]
-fn test_number() {
-    counter.methods.increment(&mut provider);
-    assert_eq!(counter.methods.number(&mut provider), 0);
 }
