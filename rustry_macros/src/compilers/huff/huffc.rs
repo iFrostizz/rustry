@@ -105,7 +105,6 @@ impl RunCompiler for Huffc {
         }
 
         let out_content = fs::read_to_string(&self.output).unwrap();
-        println!("{}", serde_json::to_string_pretty(&out_content).unwrap());
         let huffc_out = if let Ok(huffc_out) = serde_json::from_str::<HuffcOut>(&out_content) {
             huffc_out
         } else {

@@ -43,7 +43,6 @@ pub fn rustry_test(args: TokenStream, input: TokenStream) -> TokenStream {
     let mut set_up_name = None;
     let set_up_parser = syn::meta::parser(|meta| {
         if set_up_name.is_some() {
-            eprintln!("{:?}", set_up_name.clone().into_token_stream().to_string());
             return Err(Error::new_spanned(
                 args.clone().to_string(),
                 "should have only one function name",
@@ -242,9 +241,9 @@ fn make_contract_instance(
                 pub code: revm::primitives::Bytes,
             }
 
-            #[derive(Default, Debug)]
-            struct DeployedContract {
-                pub address: Address,
+            struct DeployedContract<'a> {
+                pub provider: &'a mut rustry_test::Provider,
+                pub address: revm::primitives::Address,
                 pub methods: ContractMethods
             }
 
@@ -258,6 +257,7 @@ fn make_contract_instance(
                 fn deploy(self, provider: &mut rustry_test::Provider) -> DeployedContract {
                     let address = provider.deploy(self.code).unwrap();
                     DeployedContract {
+                        provider,
                         address,
                         methods: ContractMethods::default()
                     }

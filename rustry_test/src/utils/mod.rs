@@ -1,3 +1,4 @@
+pub mod abi;
 pub mod constants;
 
 #[allow(clippy::module_inception)]
