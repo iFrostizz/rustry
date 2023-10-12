@@ -83,8 +83,8 @@ pub trait Frontend {
     fn deploy(&mut self, code: Bytes) -> Option<Address>;
     fn deploy_with_value(&mut self, code: Bytes, value: Uint<256, 4>) -> Option<Address>;
     fn call(&mut self, to: Address, data: Bytes) -> ExecRes;
-    fn send(&mut self, to: Address, data: Bytes) -> ExecRes;
-    fn send_value(&mut self, to: Address, data: Bytes, value: Uint<256, 4>) -> ExecRes;
+    fn call_value(&mut self, to: Address, data: Bytes, value: Uint<256, 4>) -> ExecRes;
+    fn send(&mut self, to: Address, value: Uint<256, 4>) -> ExecRes;
 }
 
 impl Frontend for Provider {
@@ -100,12 +100,12 @@ impl Frontend for Provider {
         self.call(self.sender, to, data, U256::ZERO)
     }
 
-    fn send(&mut self, to: Address, data: Bytes) -> ExecRes {
-        self.send(self.sender, to, data, U256::ZERO)
+    fn call_value(&mut self, to: Address, data: Bytes, value: Uint<256, 4>) -> ExecRes {
+        self.call(self.sender, to, data, value)
     }
 
-    fn send_value(&mut self, to: Address, data: Bytes, value: Uint<256, 4>) -> ExecRes {
-        self.send(self.sender, to, data, value)
+    fn send(&mut self, to: Address, value: Uint<256, 4>) -> ExecRes {
+        self.send(self.sender, to, Bytes::default(), value)
     }
 }
 

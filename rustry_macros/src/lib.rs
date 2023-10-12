@@ -6,14 +6,13 @@ mod harness;
 
 use crate::compilers::{
     builder::{BinError, Compiler, CompilerError, CompilerKinds},
-    solidity::{solc::SolcOut, types::internal_to_type}, // reexport solidity or rename
+    huff::huffc::HuffcOut, // reexport solidity or rename
+    solidity::{solc::SolcOut, types::internal_to_type},
 };
 use proc_macro::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use std::{collections::HashMap, iter};
 use syn::{parse_macro_input, Error, ItemFn};
-
-use self::compilers::{huff::huffc::HuffcOut, solidity::solc::AbiEntry};
 
 /// # Examples
 ///
@@ -78,7 +77,7 @@ pub fn rustry_test(args: TokenStream, input: TokenStream) -> TokenStream {
                 _ => unreachable!(),
             }
         } else {
-            proc_macro2::TokenStream::new()
+            syn::Error::new_spanned(fname, "invalid set_up function name").to_compile_error()
         }
     } else {
         proc_macro2::TokenStream::new()
@@ -167,9 +166,9 @@ pub fn solidity(input: TokenStream) -> TokenStream {
 
                 quote! {
                     #[allow(clippy::unused_unit)]
-                    pub fn #name(
+                    pub fn #name<'a>(
                         &self,
-                        provider: &mut rustry_test::Provider,
+                        provider: &'a mut rustry_test::Provider,
                         #(#inputs_w_types),*
                     ) -> (#(#outputs),*) {
                         #fn_call
@@ -241,12 +240,6 @@ fn make_contract_instance(
                 pub code: revm::primitives::Bytes,
             }
 
-            struct DeployedContract<'a> {
-                pub provider: &'a mut rustry_test::Provider,
-                pub address: revm::primitives::Address,
-                pub methods: ContractMethods
-            }
-
             impl ContractInstance {
                 fn new(code: revm::primitives::Bytes) -> Self {
                     Self {
@@ -254,13 +247,25 @@ fn make_contract_instance(
                     }
                 }
 
-                fn deploy(self, provider: &mut rustry_test::Provider) -> DeployedContract {
+                fn deploy<'a>(self, provider: &'a mut rustry_test::Provider) -> DeployedContract {
                     let address = provider.deploy(self.code).unwrap();
                     DeployedContract {
                         provider,
                         address,
                         methods: ContractMethods::default()
                     }
+                }
+            }
+
+            struct DeployedContract<'a> {
+                pub provider: &'a mut rustry_test::Provider,
+                pub address: revm::primitives::Address,
+                pub methods: ContractMethods
+            }
+
+            impl DeployedContract<'_> {
+                pub fn call<'a>(&'a mut self, data: revm::primitives::Bytes) {
+                    self.provider.call(self.address, data);
                 }
             }
 

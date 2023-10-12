@@ -16,10 +16,15 @@ fn set_up() {
         "
     };
 
-    let non_payable = non_payable.deploy(&mut provider);
+    let mut non_payable = non_payable.deploy(&mut provider);
 }
 
 #[rustry_test(set_up)]
 fn test_deployment() {
     assert_ne!(non_payable.address, Address::ZERO);
+}
+
+#[rustry_test(set_up)]
+fn test_novalue() {
+    non_payable.call(vec![0].into());
 }
