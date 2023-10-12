@@ -8,17 +8,12 @@ proc-macro = true
 path = "src/lib.rs"
 
 [dependencies]
-syn = { version = "2.0.37", features = ["full"] }
-tokio = { version = "1.32.0", features = ["macros"] }
-proc-macro2 = "1.0.67"
-quote = "1.0.33"
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.107"
-derive_builder = "0.12.0"
-revm = "3.5.0"
-hex = "0.4.3"
-tempfile = "3.8.0"
-ethabi = "18.0.0"
-
-[dependencies.rustry_test]
-path = "../rustry_test/" 
+syn = { workspace = true, features = ["full"] }
+tokio = { workspace = true, features = ["macros"] }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+serde_json = { workspace = true }
+derive_builder = { workspace = true }
+revm = { workspace = true }
+hex = { workspace = true }
+rustry_test = { workspace = true }

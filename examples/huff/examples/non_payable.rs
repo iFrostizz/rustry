@@ -2,7 +2,7 @@ use revm::primitives::{alloy_primitives::Uint, Address};
 use rustry_macros::{huff, rustry_test};
 use rustry_test::{
     provider::db::{Cheats, Frontend},
-    utils::constants::eth,
+    utils::constants::ether,
     Provider,
 };
 
@@ -35,6 +35,8 @@ fn test_novalue() {
 
 #[rustry_test(set_up)]
 fn test_value() {
-    non_payable.provider.mint(eth(), Address::ZERO);
+    non_payable.provider.mint(ether(), Address::ZERO);
     assert!(!non_payable.send(Uint::from(10)).is_success());
 }
+
+fn main() {}

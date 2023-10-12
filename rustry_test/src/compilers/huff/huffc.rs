@@ -1,15 +1,13 @@
-use std::{
-    fs::{self, File},
-    path::PathBuf,
-    process::{Command, Stdio},
-};
-
 use crate::{
     common::utils::opt_false,
     compilers::builder::{CompilerError, CompilerOutput, RunCompiler},
 };
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
+use std::{
+    fs::{self},
+    process::{Command, Stdio},
+};
 use tempfile::TempDir;
 
 #[derive(Builder, Serialize)]

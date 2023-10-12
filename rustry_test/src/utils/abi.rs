@@ -1,6 +1,6 @@
 use tiny_keccak::{Hasher, Keccak};
 
-enum AbiType {
+pub enum AbiType {
     Uint([u8; 32]),
     Int([u8; 32]),
     Address([u8; 20]),
@@ -47,6 +47,9 @@ impl AbiType {
         }
     }
 }
+
+// TODO
+// pub fn abi_decode(types: Vec<AbiType>) -> Vec<u8>
 
 pub fn abi_encode(types: Vec<AbiType>) -> Vec<u8> {
     types

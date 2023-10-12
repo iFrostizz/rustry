@@ -35,6 +35,18 @@ impl ExecRes {
     pub fn is_success(&self) -> bool {
         matches!(self, ExecRes::Success(_))
     }
+
+    pub fn success(&self) {
+        assert!(self.is_success());
+    }
+
+    pub fn get_data(&self) -> &Bytes {
+        match self {
+            ExecRes::Success(data) => data,
+            ExecRes::Revert(data) => data,
+            ExecRes::Halt(reason) => panic!("{:?}", reason),
+        }
+    }
 }
 
 impl Provider {
@@ -78,7 +90,7 @@ impl Provider {
         tx.data = data;
         tx.value = value;
 
-        match self.evm.transact().unwrap().result {
+        match self.evm.transact_commit().unwrap() {
             ExecutionResult::Success { output, .. } => ExecRes::Success(output.into_data()),
             ExecutionResult::Revert { output, .. } => ExecRes::Revert(output),
             ExecutionResult::Halt { reason, .. } => ExecRes::Halt(reason),
@@ -98,6 +110,19 @@ impl Provider {
             ExecutionResult::Halt { reason, .. } => ExecRes::Halt(reason),
         }
     }
+
+    fn staticcall(&mut self, from: Address, to: Address, data: Bytes) -> ExecRes {
+        let tx = &mut self.env().tx;
+        tx.caller = from;
+        tx.transact_to = TransactTo::Call(to);
+        tx.data = data;
+
+        match self.evm.transact().unwrap().result {
+            ExecutionResult::Success { output, .. } => ExecRes::Success(output.into_data()),
+            ExecutionResult::Revert { output, .. } => ExecRes::Revert(output),
+            ExecutionResult::Halt { reason, .. } => ExecRes::Halt(reason),
+        }
+    }
 }
 
 pub trait Frontend {
@@ -106,6 +131,7 @@ pub trait Frontend {
     fn call(&mut self, to: Address, data: Bytes) -> ExecRes;
     fn call_value(&mut self, to: Address, data: Bytes, value: Uint<256, 4>) -> ExecRes;
     fn send(&mut self, to: Address, value: Uint<256, 4>) -> ExecRes;
+    fn staticcall(&mut self, to: Address, data: Bytes) -> ExecRes;
 }
 
 impl Frontend for Provider {
@@ -127,6 +153,10 @@ impl Frontend for Provider {
 
     fn send(&mut self, to: Address, value: Uint<256, 4>) -> ExecRes {
         self.send(self.sender, to, Bytes::default(), value)
+    }
+
+    fn staticcall(&mut self, to: Address, data: Bytes) -> ExecRes {
+        self.staticcall(self.sender, to, data)
     }
 }
 

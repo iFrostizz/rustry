@@ -7,6 +7,9 @@ edition = "2021"
 path = "src/lib.rs"
 
 [dependencies]
-revm = "3.5.0"
-rlp = "0.5.2"
-tiny-keccak = "2.0.2"
+revm = { workspace = true }
+tiny-keccak = { workspace = true }
+derive_builder = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }

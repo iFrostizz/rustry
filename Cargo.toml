@@ -1,5 +1,6 @@
 [workspace]
-members = ["rustry_macros", "rustry_test"]
+members = ["rustry_macros", "rustry_test", "examples/*"]
+default-members = ["rustry_macros", "rustry_test"]
 exclude = []
 resolver = "2"
 
@@ -7,3 +8,19 @@ resolver = "2"
 version = "0.1.0"
 authors = ["Franfran <hello@franfran.dev>"]
 edition = "2021"
+license = "AGPLv3"
+
+[workspace.dependencies]
+syn = { version = "2.0.37", features = ["full"] }
+tokio = { version = "1.32.0", features = ["macros"] }
+proc-macro2 = "1.0.67"
+quote = "1.0.33"
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.107"
+tiny-keccak = "2.0.2"
+derive_builder = "0.12.0"
+revm = "3.5.0"
+hex = "0.4.3"
+tempfile = "3.8.0"
+rustry_test = { path = "./rustry_test/"}
+rustry_macros = { path = "./rustry_macros/"}

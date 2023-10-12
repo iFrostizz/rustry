@@ -1,7 +1,6 @@
 use crate::{
     common::utils::opt_false,
-    compilers::builder::{CompilerOutput, RunCompiler},
-    BinError, CompilerError,
+    compilers::builder::{BinError, CompilerError, CompilerOutput, RunCompiler},
 };
 use core::fmt;
 use derive_builder::Builder;

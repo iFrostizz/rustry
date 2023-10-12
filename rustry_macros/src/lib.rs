@@ -1,16 +1,14 @@
 #![feature(proc_macro_span)]
 
-mod common;
-mod compilers;
 mod harness;
 
-use crate::compilers::{
-    builder::{BinError, Compiler, CompilerError, CompilerKinds},
-    huff::huffc::HuffcOut, // reexport solidity or rename
-    solidity::{solc::SolcOut, types::internal_to_type},
-};
 use proc_macro::{Span, TokenStream};
 use quote::{quote, ToTokens};
+use rustry_test::compilers::{
+    builder::{BinError, Compiler, CompilerError, CompilerKinds},
+    huff::huffc::HuffcOut, // TODO reexport solidity or rename
+    solidity::{solc::SolcOut, types::internal_to_type},
+};
 use std::{collections::HashMap, iter};
 use syn::{parse_macro_input, Error, ItemFn};
 
@@ -263,12 +261,16 @@ fn make_contract_instance(
                 pub methods: ContractMethods
             }
 
-            impl DeployedContract<'_> {
-                pub fn call<'a>(&'a mut self, data: revm::primitives::Bytes) -> rustry_test::provider::db::ExecRes {
-                    self.provider.call(self.address, data)
+            impl rustry_test::common::contract::Contract for DeployedContract<'_> {
+                fn call<'a>(&'a mut self, data: Vec<u8>) -> rustry_test::provider::db::ExecRes {
+                    self.provider.call(self.address, data.into())
                 }
 
-                pub fn send<'a>(&'a mut self, value: revm::primitives::alloy_primitives::Uint<256, 4>) -> rustry_test::provider::db::ExecRes {
+                fn staticcall<'a>(&'a mut self, data: Vec<u8>) -> rustry_test::provider::db::ExecRes {
+                    self.provider.staticcall(self.address, data.into())
+                }
+
+                fn send<'a>(&'a mut self, value: revm::primitives::alloy_primitives::Uint<256, 4>) -> rustry_test::provider::db::ExecRes {
                     self.provider.send(self.address, value)
                 }
             }
