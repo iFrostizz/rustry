@@ -3,6 +3,7 @@ use rustry_macros::{rustry_test, solidity};
 use rustry_test::common::contract::Contract;
 use rustry_test::utils::abi::abi_encode_signature;
 use rustry_test::{provider::db::{ExecRes, Frontend}, utils::constants::bytes_zero, Provider};
+use rustry_test::utils::abi::{AbiType, abi_decode};
 
 #[allow(unused)]
 fn set_up() {
@@ -54,10 +55,7 @@ fn get_number<T: Contract>(mut counter: T) -> U256 {
     let ret = counter.staticcall(abi_encode_signature("number()", vec![]));
     assert!(ret.is_success());
     let number = ret.get_data();
-    let num_vec = number.to_vec();
-    assert!(num_vec.len() == 32);
-    let arr: [u8; 32] = number.to_vec().try_into().unwrap();
-    U256::from_be_bytes(arr)
+    U256::from_be_bytes::<32>(abi_decode(number, vec![AbiType::Uint]).try_into().unwrap())
 }
 
 fn main() {}

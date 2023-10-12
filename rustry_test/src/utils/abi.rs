@@ -1,13 +1,29 @@
+use revm::primitives::Bytes;
 use tiny_keccak::{Hasher, Keccak};
 
 pub enum AbiType {
+    Uint,
+    Int,
+    Address,
+}
+
+impl AbiType {
+    fn len(&self) -> usize {
+        match self {
+            AbiType::Uint | AbiType::Int => 32,
+            AbiType::Address => 20,
+        }
+    }
+}
+
+pub enum AbiValueType {
     Uint([u8; 32]),
     Int([u8; 32]),
     Address([u8; 20]),
 }
 
-impl AbiType {
-    fn from(value: &str, data: &[u8]) -> AbiType {
+impl AbiValueType {
+    fn from(value: &str, data: &[u8]) -> AbiValueType {
         if value.ends_with(']') {
             todo!("no array for now");
         }
@@ -17,11 +33,11 @@ impl AbiType {
 
         // TODO should fill 0's at the end to avoid out-of-bounds access
         if value.starts_with("uint") {
-            AbiType::Uint(Self::sanitize(data, 32).try_into().unwrap())
+            AbiValueType::Uint(Self::sanitize(data, 32).try_into().unwrap())
         } else if value.starts_with("int") {
-            AbiType::Int(Self::sanitize(data, 32).try_into().unwrap())
+            AbiValueType::Int(Self::sanitize(data, 32).try_into().unwrap())
         } else if value == "address" {
-            AbiType::Address(Self::sanitize(data, 20).try_into().unwrap())
+            AbiValueType::Address(Self::sanitize(data, 20).try_into().unwrap())
         } else {
             unreachable!()
         }
@@ -41,22 +57,30 @@ impl AbiType {
 
     fn inner(&self) -> &[u8] {
         match self {
-            AbiType::Uint(inner) => inner,
-            AbiType::Int(inner) => inner,
-            AbiType::Address(inner) => inner,
+            AbiValueType::Uint(inner) => inner,
+            AbiValueType::Int(inner) => inner,
+            AbiValueType::Address(inner) => inner,
         }
     }
 }
 
-// TODO
-// pub fn abi_decode(types: Vec<AbiType>) -> Vec<u8>
+pub fn abi_decode(data: &Bytes, types: Vec<AbiType>) -> Vec<u8> {
+    let data_vec = data.to_vec();
+    let mut data_slice = data_vec.as_slice();
+    let tot_len: usize = types.iter().map(|ty| ty.len()).sum();
+    assert_eq!(data_slice.len(), tot_len);
+    types
+        .into_iter()
+        .flat_map(|ty| data_slice.take(..(ty.len())).unwrap().to_vec())
+        .collect()
+}
 
-pub fn abi_encode(types: Vec<AbiType>) -> Vec<u8> {
+pub fn abi_encode(types: Vec<AbiValueType>) -> Vec<u8> {
     types
         .into_iter()
         .flat_map(|abi_ty| match abi_ty {
-            AbiType::Uint(data) | AbiType::Int(data) => data.to_vec(),
-            AbiType::Address(data) => data.to_vec(),
+            AbiValueType::Uint(data) | AbiValueType::Int(data) => data.to_vec(),
+            AbiValueType::Address(data) => data.to_vec(),
         })
         .collect()
 }
@@ -76,7 +100,7 @@ pub fn abi_encode_signature(signature: &str, values: Vec<Vec<u8>>) -> Vec<u8> {
         sig_inner
             .split(',')
             .enumerate()
-            .map(|(i, ty)| AbiType::from(ty, &values[i]))
+            .map(|(i, ty)| AbiValueType::from(ty, &values[i]))
             .collect()
     } else {
         Default::default()

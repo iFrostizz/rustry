@@ -1,4 +1,5 @@
 #![feature(proc_macro_span)]
+#![feature(slice_take)]
 
 mod harness;
 
