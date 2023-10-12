@@ -1,8 +1,8 @@
 use revm::{
     db::{CacheDB, EmptyDB},
     primitives::{
-        alloy_primitives::Uint, Address, Bytes, Env, ExecutionResult, Halt, Output, TransactTo,
-        U256,
+        alloy_primitives::Uint, AccountInfo, Address, Bytes, Env, ExecutionResult, Halt, Output,
+        TransactTo, U256,
     },
     EVM,
 };
@@ -24,15 +24,36 @@ impl Default for Provider {
     }
 }
 
+#[derive(Debug)]
 pub enum ExecRes {
     Success(Bytes),
     Revert(Bytes),
     Halt(Halt),
 }
 
+impl ExecRes {
+    pub fn is_success(&self) -> bool {
+        matches!(self, ExecRes::Success(_))
+    }
+}
+
 impl Provider {
     fn env(&mut self) -> &mut Env {
         &mut self.evm.env
+    }
+
+    fn load_account_info(&mut self, who: Address) -> AccountInfo {
+        self.evm
+            .db()
+            .unwrap()
+            .load_account(who)
+            .unwrap()
+            .info()
+            .unwrap()
+    }
+
+    fn insert_account_info(&mut self, who: Address, info: AccountInfo) {
+        self.evm.db().unwrap().insert_account_info(who, info);
     }
 
     fn deploy_code(&mut self, from: Address, code: Bytes, value: Uint<256, 4>) -> Option<Address> {
@@ -111,10 +132,17 @@ impl Frontend for Provider {
 
 pub trait Cheats {
     fn impersonate(&mut self, who: Address);
+    fn mint(&mut self, wad: Uint<256, 4>, who: Address);
 }
 
 impl Cheats for Provider {
     fn impersonate(&mut self, who: Address) {
         self.sender = who
+    }
+
+    fn mint(&mut self, wad: Uint<256, 4>, who: Address) {
+        let mut info = self.load_account_info(who);
+        info.balance += wad;
+        self.insert_account_info(who, info);
     }
 }

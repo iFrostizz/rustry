@@ -264,8 +264,12 @@ fn make_contract_instance(
             }
 
             impl DeployedContract<'_> {
-                pub fn call<'a>(&'a mut self, data: revm::primitives::Bytes) {
-                    self.provider.call(self.address, data);
+                pub fn call<'a>(&'a mut self, data: revm::primitives::Bytes) -> rustry_test::provider::db::ExecRes {
+                    self.provider.call(self.address, data)
+                }
+
+                pub fn send<'a>(&'a mut self, value: revm::primitives::alloy_primitives::Uint<256, 4>) -> rustry_test::provider::db::ExecRes {
+                    self.provider.send(self.address, value)
                 }
             }
 
