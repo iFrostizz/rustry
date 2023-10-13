@@ -1,9 +1,14 @@
-use revm::primitives::{Bytes, Address, U256};
+use revm::primitives::{Address, Bytes, U256};
 use rustry_macros::{rustry_test, solidity};
 use rustry_test::common::contract::Contract;
+use rustry_test::provider;
 use rustry_test::utils::abi::abi_encode_signature;
-use rustry_test::{provider::db::{ExecRes, Frontend}, utils::constants::bytes_zero, Provider};
-use rustry_test::utils::abi::{AbiType, abi_decode};
+use rustry_test::utils::abi::{abi_decode, AbiType};
+use rustry_test::{
+    provider::db::{ExecRes, Frontend},
+    utils::constants::bytes_zero,
+    Provider,
+};
 
 #[allow(unused)]
 fn set_up() {
@@ -38,21 +43,24 @@ fn test_deployment() {
 
 #[rustry_test(set_up)]
 fn test_number() {
-    let number = get_number(counter);
+    let number = get_number(counter.address, &mut provider);
     assert_eq!(number, U256::ZERO);
 }
 
 #[rustry_test(set_up)]
 fn test_increment() {
-    counter
-        .call(abi_encode_signature("increment()", vec![]))
+    provider
+        .call(
+            counter.address,
+            abi_encode_signature("increment()", vec![]).into(),
+        )
         .success();
-    let number = get_number(counter);
+    let number = get_number(counter.address, &mut provider);
     assert_eq!(number, U256::from(1));
 }
 
-fn get_number<T: Contract>(mut counter: T) -> U256 {
-    let ret = counter.staticcall(abi_encode_signature("number()", vec![]));
+fn get_number(caddr: Address, provider: &mut Provider) -> U256 {
+    let ret = provider.staticcall(caddr, abi_encode_signature("number()", vec![]).into());
     assert!(ret.is_success());
     let number = ret.get_data();
     U256::from_be_bytes::<32>(abi_decode(number, vec![AbiType::Uint]).try_into().unwrap())
