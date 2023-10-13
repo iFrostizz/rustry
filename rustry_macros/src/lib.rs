@@ -249,30 +249,28 @@ fn make_contract_instance(
                 fn deploy<'a>(self, provider: &'a mut rustry_test::Provider) -> DeployedContract {
                     let address = provider.deploy(self.code).unwrap();
                     DeployedContract {
-                        provider,
                         address,
                         methods: ContractMethods::default()
                     }
                 }
             }
 
-            struct DeployedContract<'a> {
-                pub provider: &'a mut rustry_test::Provider,
+            struct DeployedContract {
                 pub address: revm::primitives::Address,
                 pub methods: ContractMethods
             }
 
-            impl rustry_test::common::contract::Contract for DeployedContract<'_> {
-                fn call<'a>(&'a mut self, data: Vec<u8>) -> rustry_test::provider::db::ExecRes {
-                    self.provider.call(self.address, data.into())
+            impl rustry_test::common::contract::Contract for DeployedContract {
+                fn call(&mut self, provider: &mut rustry_test::Provider, data: Vec<u8>) -> rustry_test::provider::db::ExecRes {
+                    provider.call(self.address, data.into())
                 }
 
-                fn staticcall<'a>(&'a mut self, data: Vec<u8>) -> rustry_test::provider::db::ExecRes {
-                    self.provider.staticcall(self.address, data.into())
+                fn staticcall(&mut self, provider: &mut rustry_test::Provider, data: Vec<u8>) -> rustry_test::provider::db::ExecRes {
+                    provider.staticcall(self.address, data.into())
                 }
 
-                fn send<'a>(&'a mut self, value: revm::primitives::alloy_primitives::Uint<256, 4>) -> rustry_test::provider::db::ExecRes {
-                    self.provider.send(self.address, value)
+                fn send(&mut self, provider: &mut rustry_test::Provider, value: revm::primitives::alloy_primitives::Uint<256, 4>) -> rustry_test::provider::db::ExecRes {
+                    provider.send(self.address, value)
                 }
             }
 

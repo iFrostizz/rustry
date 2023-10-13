@@ -1,6 +1,7 @@
 use revm::primitives::{alloy_primitives::Uint, Address};
 use rustry_macros::{huff, rustry_test};
 use rustry_test::{
+    common::contract::Contract,
     provider::db::{Cheats, Frontend},
     utils::constants::ether,
     Provider,
@@ -30,13 +31,17 @@ fn test_deployment() {
 
 #[rustry_test(set_up)]
 fn test_novalue() {
-    assert!(non_payable.call(vec![0].into()).is_success());
+    assert!(provider
+        .call(non_payable.address, vec![0].into())
+        .is_success());
 }
 
 #[rustry_test(set_up)]
 fn test_value() {
-    non_payable.provider.mint(ether(), Address::ZERO);
-    assert!(!non_payable.send(Uint::from(10)).is_success());
+    provider.mint(ether(), Address::ZERO);
+    assert!(!provider
+        .send(non_payable.address, Uint::from(10).into())
+        .is_success());
 }
 
 fn main() {}
