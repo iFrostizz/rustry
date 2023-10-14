@@ -1,7 +1,7 @@
 #![feature(proc_macro_span)]
 #![feature(slice_take)]
 
-mod harness;
+mod harness; // TODO wat do ?
 
 use proc_macro::{Span, TokenStream};
 use quote::{quote, ToTokens};
@@ -167,7 +167,7 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                     #[allow(clippy::unused_unit)]
                     pub fn #name<'a>(
                         &self,
-                        provider: &'a mut rustry_test::Provider,
+                        provider: &'a mut rustry_test::provider::Provider,
                         #(#inputs_w_types),*
                     ) -> (#(#outputs),*) {
                         #fn_call
@@ -246,7 +246,7 @@ fn make_contract_instance(
                     }
                 }
 
-                fn deploy<'a>(self, provider: &'a mut rustry_test::Provider) -> DeployedContract {
+                fn deploy<'a>(self, provider: &'a mut rustry_test::provider::Provider) -> DeployedContract {
                     let address = provider.deploy(self.code).unwrap();
                     DeployedContract {
                         address,
@@ -261,15 +261,15 @@ fn make_contract_instance(
             }
 
             impl rustry_test::common::contract::Contract for DeployedContract {
-                fn call(&mut self, provider: &mut rustry_test::Provider, data: Vec<u8>) -> rustry_test::provider::db::ExecRes {
+                fn call(&mut self, provider: &mut rustry_test::provider::Provider, data: Vec<u8>) -> rustry_test::provider::db::ExecRes {
                     provider.call(self.address, data.into())
                 }
 
-                fn staticcall(&mut self, provider: &mut rustry_test::Provider, data: Vec<u8>) -> rustry_test::provider::db::ExecRes {
+                fn staticcall(&mut self, provider: &mut rustry_test::provider::Provider, data: Vec<u8>) -> rustry_test::provider::db::ExecRes {
                     provider.staticcall(self.address, data.into())
                 }
 
-                fn send(&mut self, provider: &mut rustry_test::Provider, value: revm::primitives::alloy_primitives::Uint<256, 4>) -> rustry_test::provider::db::ExecRes {
+                fn send(&mut self, provider: &mut rustry_test::provider::Provider, value: revm::primitives::alloy_primitives::Uint<256, 4>) -> rustry_test::provider::db::ExecRes {
                     provider.send(self.address, value)
                 }
             }

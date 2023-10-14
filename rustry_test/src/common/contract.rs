@@ -1,5 +1,4 @@
-use crate::provider::db::ExecRes;
-use crate::Provider;
+use crate::provider::{db::ExecRes, Provider};
 
 pub trait Contract {
     fn call(&mut self, provider: &mut Provider, data: Vec<u8>) -> ExecRes;
