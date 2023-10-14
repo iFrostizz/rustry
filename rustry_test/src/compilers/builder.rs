@@ -1,14 +1,17 @@
 use crate::compilers::{
     huff::huffc::HuffcBuilder,
     solidity::solc::{
-        OutputOption, Settings, SolcBuilder, SolcBuilderError, SolcError, SolcOut, Source,
+        JsonError, OutputOption, Settings, SolcBuilder, SolcBuilderError, SolcOut, Source,
     },
 };
 use core::fmt;
 use std::{collections::HashMap, fs::File, io::Write};
 use tempfile::tempdir;
 
-use super::huff::huffc::HuffcOut;
+use super::{
+    huff::huffc::HuffcOut,
+    vyper::vyperc::{self, VypercBuilder, VypercOut},
+};
 
 #[derive(Debug)]
 pub enum CompilerKinds {
@@ -26,7 +29,7 @@ pub struct Compiler {
 #[derive(Debug)]
 pub enum CompilerOutput {
     Solc(SolcOut),
-    Vyper,
+    Vyper(VypercOut),
     Huff(HuffcOut),
 }
 
@@ -46,14 +49,14 @@ impl fmt::Display for BuilderError {
 impl fmt::Display for BinError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Solc(e) => write!(f, "solc bin error: {e}"),
+            Self::Json(e) => write!(f, "compiler bin error: {e}"),
         }
     }
 }
 
 #[derive(Debug)]
 pub enum BinError {
-    Solc(SolcError),
+    Json(JsonError),
 }
 
 #[derive(Debug)]
@@ -117,6 +120,7 @@ impl Compiler {
                     .into_iter()
                     .map(|(file, content)| (file, Source { content }))
                     .collect();
+
                 solc.run()
             }
             CompilerKinds::Huff => {
@@ -140,7 +144,29 @@ impl Compiler {
 
                 huffc.run()
             }
-            CompilerKinds::Vyper => todo!(),
+            CompilerKinds::Vyper => {
+                let mut vyc = VypercBuilder::default()
+                    .settings(Some(super::vyper::vyperc::Settings {
+                        evm_version: String::from("paris"),
+                        output_selection: HashMap::from([(
+                            String::from("*"),
+                            HashMap::from([(
+                                String::from("*"),
+                                vec![vyperc::OutputOption::EvmBytecode, vyperc::OutputOption::Abi],
+                            )]),
+                        )]),
+                    }))
+                    .build()
+                    .unwrap();
+                vyc.sources = self
+                    .sources
+                    .clone()
+                    .into_iter()
+                    .map(|(file, content)| (file, Source { content }))
+                    .collect();
+
+                vyc.run()
+            }
         }
     }
 }

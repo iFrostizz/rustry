@@ -12,11 +12,13 @@ use std::{
     process::{Command, Stdio},
 };
 
+// TODO we should move that in a common place
 #[derive(Serialize)]
 pub struct Source {
     pub content: String,
 }
 
+// TODO move as well
 #[derive(Clone, Serialize)]
 pub enum OutputOption {
     #[serde(rename = "metadata")]
@@ -83,13 +85,13 @@ pub enum Severity {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SolcCodeError {
+pub struct OutError<S, E> {
     #[serde(rename = "sourceLocation")]
-    pub source_location: Option<SourceLocation>,
+    pub source_location: Option<S>,
     #[serde(rename = "secondarySourceLocation")]
     pub secondary_source_locations: Option<Vec<SourceLocation>>,
     #[serde(rename = "type")]
-    pub err_type: ErrType,
+    pub err_type: E,
     pub component: String,
     pub severity: Severity,
     #[serde(rename = "errorCode")]
@@ -164,7 +166,7 @@ pub struct StorageLayout {}
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TypeType {
     #[serde(rename = "internalType")]
-    pub internal_type: String,
+    pub internal_type: Option<String>,
     pub name: String,
     #[serde(rename = "type")]
     pub type_type: String,
@@ -182,7 +184,7 @@ pub struct AbiEntry {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Contract {
+pub struct SolcContract {
     pub abi: Option<Vec<AbiEntry>>,
     pub metadata: Option<String>,
     #[serde(rename = "userdoc")]
@@ -204,10 +206,10 @@ pub struct Contract {
 // https://docs.soliditylang.org/en/latest/using-the-compiler.html#output-description
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SolcOut {
-    pub errors: Option<Vec<SolcCodeError>>,
+    pub errors: Option<Vec<OutError<SourceLocation, ErrType>>>,
     pub sources: HashMap<String, HashMap<String, i32>>,
     // "sourceFile.sol" { "ContractName" { ... } }
-    pub contracts: Option<HashMap<String, HashMap<String, Contract>>>,
+    pub contracts: Option<HashMap<String, HashMap<String, SolcContract>>>,
 }
 
 impl From<SolcOut> for CompilerOutput {
@@ -228,19 +230,19 @@ impl TryFrom<CompilerOutput> for SolcOut {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SolcError {
+pub struct JsonError {
     pub message: String,
 }
 
-impl From<SolcError> for CompilerError {
-    fn from(val: SolcError) -> Self {
-        CompilerError::BinError(BinError::Solc(val))
+impl From<JsonError> for CompilerError {
+    fn from(val: JsonError) -> Self {
+        CompilerError::BinError(BinError::Json(val))
     }
 }
 
-impl Error for SolcError {}
+impl Error for JsonError {}
 
-impl fmt::Display for SolcError {
+impl fmt::Display for JsonError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.message)
     }
@@ -269,7 +271,7 @@ impl RunCompiler for Solc {
         let raw_out = String::from_utf8(stdout).unwrap();
 
         if !output.status.success() {
-            return Err(SolcError {
+            return Err(JsonError {
                 message: String::from_utf8(output.stderr).unwrap(),
             }
             .into());
@@ -288,7 +290,7 @@ impl RunCompiler for Solc {
                     .formatted_message
                     .as_ref()
                     .unwrap_or(&first_err.message);
-                Err(SolcError {
+                Err(JsonError {
                     message: message.to_string(),
                 }
                 .into())

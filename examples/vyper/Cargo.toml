@@ -1,16 +1,15 @@
 [package]
-name = "rustry_macros"
+name = "vyper"
 version.workspace = true
-edition = "2021"
-
-[lib]
-proc-macro = true
-path = "src/lib.rs"
+license.workspace = true
+edition.workspace = true
+publish = false
 
 [dependencies]
 syn = { workspace = true, features = ["full"] }
-proc-macro2 = { workspace = true }
-quote = { workspace = true }
 revm = { workspace = true }
 hex = { workspace = true }
+tempfile = { workspace = true }
 rustry_test = { workspace = true }
+rustry_macros = { workspace = true }
+

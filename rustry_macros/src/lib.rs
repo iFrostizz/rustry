@@ -9,6 +9,7 @@ use rustry_test::compilers::{
     builder::{BinError, Compiler, CompilerError, CompilerKinds},
     huff::huffc::HuffcOut, // TODO reexport solidity or rename
     solidity::{solc::SolcOut, types::internal_to_type},
+    vyper::vyperc::VypercOut,
 };
 use std::{collections::HashMap, iter};
 use syn::{parse_macro_input, Error, ItemFn};
@@ -182,8 +183,53 @@ pub fn solidity(input: TokenStream) -> TokenStream {
         Err(err) => match err {
             CompilerError::BuilderError(_) => todo!(),
             CompilerError::BinError(err) => match err {
-                BinError::Solc(solc_err) => {
-                    Error::new_spanned(source_code, solc_err.message).to_compile_error()
+                BinError::Json(json_err) => {
+                    Error::new_spanned(source_code, json_err.message).to_compile_error()
+                }
+            },
+        },
+    }
+    .into()
+}
+
+#[proc_macro]
+pub fn vyper(input: TokenStream) -> TokenStream {
+    let lit_str = parse_macro_input!(input as syn::LitStr);
+    let source_code = lit_str.value();
+
+    let vyperc = Compiler {
+        kind: CompilerKinds::Vyper,
+        sources: HashMap::from([(String::from("source_code.vy"), source_code.clone())]),
+    };
+
+    match vyperc.run() {
+        Ok(out) => {
+            let vyc_out = VypercOut::try_from(out).unwrap();
+            let contracts = vyc_out.contracts.unwrap();
+            let contract = contracts
+                .get("source_code.vy")
+                .unwrap()
+                .get("source_code")
+                .unwrap();
+
+            let bytecode = &contract
+                .evm
+                .as_ref()
+                .unwrap()
+                .bytecode
+                .as_ref()
+                .unwrap()
+                .object
+                .trim_start_matches("0x")
+                .to_string();
+
+            make_contract_instance(iter::empty::<proc_macro2::TokenStream>(), bytecode)
+        }
+        Err(err) => match err {
+            CompilerError::BuilderError(_) => todo!(),
+            CompilerError::BinError(err) => match err {
+                BinError::Json(json_err) => {
+                    Error::new_spanned(source_code, json_err.message).to_compile_error()
                 }
             },
         },
@@ -198,7 +244,7 @@ pub fn huff(input: TokenStream) -> TokenStream {
 
     let huffc = Compiler {
         kind: CompilerKinds::Huff,
-        sources: HashMap::from([(String::from("source_code.sol"), source_code.clone())]),
+        sources: HashMap::from([(String::from("source_code.huff"), source_code.clone())]),
     };
 
     match huffc.run() {
