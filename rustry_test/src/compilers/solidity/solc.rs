@@ -172,6 +172,11 @@ pub struct TypeType {
     pub type_type: String,
 }
 
+// TODO move elsewhere
+pub trait EntryUtils {
+    fn signature(&self) -> String;
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AbiEntry {
     pub inputs: Vec<TypeType>,
@@ -181,6 +186,18 @@ pub struct AbiEntry {
     pub state_mutability: String,
     #[serde(rename = "type")]
     pub entry_type: String,
+}
+
+impl EntryUtils for AbiEntry {
+    fn signature(&self) -> String {
+        let mut inner_types: String = self
+            .inputs
+            .iter()
+            .map(|tt| format!("{},", tt.type_type.clone()))
+            .collect();
+        inner_types.pop();
+        format!("{0}({inner_types})", self.name)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

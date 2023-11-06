@@ -3,6 +3,8 @@ pub fn internal_to_type(_type: &str) -> String {
         unimplemented!("{_type} is an invalid type for now");
     }
     if _type.starts_with("uint") {
+        // TODO clamp types
+        // String::from("U256")
         String::from("u128")
     } else {
         todo!("{_type} missing !");

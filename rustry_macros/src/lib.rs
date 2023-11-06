@@ -4,11 +4,15 @@
 mod harness; // TODO wat do ?
 
 use proc_macro::{Span, TokenStream};
+use proc_macro2::Ident;
 use quote::{quote, ToTokens};
 use rustry_test::compilers::{
     builder::{BinError, Compiler, CompilerError, CompilerKinds},
-    huff::huffc::HuffcOut, // TODO reexport solidity or rename
-    solidity::{solc::SolcOut, types::internal_to_type},
+    huff::huffc::HuffcOut,
+    solidity::{
+        solc::{self, EntryUtils, SolcOut},
+        types::internal_to_type,
+    },
     vyper::vyperc::VypercOut,
 };
 use std::{collections::HashMap, iter};
@@ -138,8 +142,31 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                 .filter(|entry| entry.entry_type == "function")
                 .collect();
 
-            let impl_fns = functions.iter().map(|func| {
-                let name: proc_macro2::TokenStream = func.name.parse().unwrap();
+            // ugly shit, use Iterator::partition
+            let mut names_occur: HashMap<String, usize> = HashMap::new();
+            functions.iter().for_each(|func| {
+                let entry = names_occur.entry(func.name.clone()).or_default();
+                *entry += 1;
+            });
+            let mut names_occur: HashMap<_, _> =
+                names_occur.into_iter().filter(|(_, v)| *v > 1).collect();
+            let functions: Vec<(&solc::AbiEntry, Ident)> = functions
+                .into_iter()
+                .map(|func| {
+                    let new_name = if let Some(count) = names_occur.get_mut(&func.name) {
+                        *count -= 1;
+                        format!("{}{count}", func.name)
+                    } else {
+                        func.name.clone()
+                    };
+
+                    (func, Ident::new(&new_name, proc_macro2::Span::call_site()))
+                })
+                .rev()
+                .collect();
+
+            let impl_fns = functions.iter().map(|(func, meth_name)| {
+                let signature: proc_macro2::TokenStream = func.signature().parse().unwrap();
                 let inputs_w_types = func.inputs.iter().map(|input| {
                     let iname: proc_macro2::TokenStream = input.name.clone().parse().unwrap();
                     let itype: proc_macro2::TokenStream =
@@ -157,24 +184,40 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                     }
                 });
 
-                let fn_call = match func.state_mutability.as_str() {
-                    "nonpayable" => proc_macro2::TokenStream::new(),
-                    "view" => proc_macro2::TokenStream::new(),
+                let (output, fn_call) = match func.state_mutability.as_str() {
+                    "nonpayable" => (quote! {
+                        ()
+                    }, quote! {
+                        provider.call(self.address, abi_encode_signature(stringify!(#signature), vec![]).into());
+                    }),
+                    "view" => (quote! {
+                        revm::primitives::Bytes
+                    }, quote! {
+                        let ret = provider.staticcall(
+                            self.address, 
+                            abi_encode_signature(stringify!(#signature), vec![]).into()
+                        );
+                        let data = ret.get_data();
+                        return data.clone();
+                    }),
                     _ => unimplemented!(),
                 };
-                let fn_ret = func.outputs.iter().map(|_| 0u128);
+                // let fn_ret = func.outputs.iter().map(|_| 0u128);
+                // TODO let fn_ret = func.outputs.iter().map(|_| revm::primitives::U256::ZERO);
 
                 quote! {
                     #[allow(clippy::unused_unit)]
-                    pub fn #name<'a>(
+                    pub fn #meth_name<'a>(
                         &self,
                         provider: &'a mut rustry_test::provider::Provider,
                         #(#inputs_w_types),*
-                    ) -> (#(#outputs),*) {
+                    // ) -> (#(#outputs),*) {
+                    ) -> #output {
                         #fn_call
 
-                        (#(#fn_ret),*)
+                        // (#(#fn_ret),*)
                     }
+                    // pub fn #meth_name() {}
                 }
             });
 
@@ -272,9 +315,17 @@ fn make_contract_instance(
     quote! {
         {
             #[derive(Default, Debug)]
-            struct ContractMethods;
+            struct ContractMethods {
+                pub address: revm::primitives::Address,
+            };
 
             impl ContractMethods {
+                fn new(address: revm::primitives::Address) -> Self {
+                    Self {
+                        address
+                    }
+                }
+
                 #(
                     #impl_fns
                  )*
@@ -296,7 +347,7 @@ fn make_contract_instance(
                     let address = provider.deploy(self.code).unwrap();
                     DeployedContract {
                         address,
-                        methods: ContractMethods::default()
+                        methods: ContractMethods::new(address)
                     }
                 }
             }

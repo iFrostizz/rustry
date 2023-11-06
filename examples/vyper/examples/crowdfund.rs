@@ -1,13 +1,13 @@
-use revm::primitives::{Address, Bytes, U256};
+use revm::primitives::Address;
 use rustry_macros::*;
 use rustry_test::prelude::*;
 
 fn set_up() {
     let mut provider = Provider::default();
 
+    // https://docs.vyperlang.org/en/stable/vyper-by-example.html#crowdfund
     let crowdfund = vyper! {
         r#"
-# https://docs.vyperlang.org/en/stable/vyper-by-example.html#crowdfund
 # Setup private variables (only callable from within the contract)
 
 funders: HashMap[address, uint256]
@@ -53,6 +53,7 @@ def refund():
         "#
     };
 
+    // TODO constructor args at the end
     let mut crowdfund = crowdfund.deploy(&mut provider);
 }
 
@@ -60,3 +61,5 @@ def refund():
 fn test_deployment() {
     assert_ne!(crowdfund.address, Address::ZERO);
 }
+
+fn main() {}
