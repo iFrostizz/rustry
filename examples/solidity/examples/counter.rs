@@ -62,17 +62,13 @@ fn test_increment() {
 fn test_increment_method() {
     counter.methods.increment(&mut provider);
     let number = counter.methods.number(&mut provider);
-    assert_eq!(decode_number(&number), U256::from(1));
+    assert_eq!(number, U256::from(1));
 }
 
 fn get_number(caddr: Address, provider: &mut Provider) -> U256 {
     let ret = provider.staticcall(caddr, abi_encode_signature("number()", vec![]).into());
     assert!(ret.is_success());
-    let number = ret.get_data();
-    decode_number(number)
-}
-
-fn decode_number(data: &Bytes) -> U256 {
+    let data = ret.get_data();
     U256::from_be_bytes::<32>(abi_decode(data, vec![AbiType::Uint]).try_into().unwrap())
 }
 

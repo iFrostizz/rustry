@@ -29,4 +29,19 @@ To run the examples, launch
 cargo test --workspace --examples
 # or for a single example
 cargo test --workspace --example counter
+# or
+cargo test -p solidity --example counter
+```
+
+Run all examples for one type
+
+```sh
+cargo test -p vyper --examples
+```
+
+Run all tests
+```sh
+cargo test --all
+# or
+cargo test --workspace
 ```

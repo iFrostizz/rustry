@@ -176,34 +176,57 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                     }
                 });
 
-                let outputs = func.outputs.iter().map(|output| {
-                    let otype: proc_macro2::TokenStream =
-                        internal_to_type(&output.type_type).parse().unwrap();
-                    quote! {
-                        #otype
-                    }
-                });
+                // let outputs = func.outputs.iter().map(|output| {
+                //     let otype: proc_macro2::TokenStream =
+                //         internal_to_type(&output.type_type).parse().unwrap();
+                //     quote! {
+                //         #otype
+                //     }
+                // });
 
-                let (output, fn_call) = match func.state_mutability.as_str() {
-                    "nonpayable" => (quote! {
-                        ()
-                    }, quote! {
+                let fn_call = match func.state_mutability.as_str() {
+                    "nonpayable" => quote! {
                         provider.call(self.address, abi_encode_signature(stringify!(#signature), vec![]).into());
-                    }),
-                    "view" => (quote! {
-                        revm::primitives::Bytes
-                    }, quote! {
+                    },
+                    "view" => quote! {
                         let ret = provider.staticcall(
                             self.address, 
                             abi_encode_signature(stringify!(#signature), vec![]).into()
                         );
-                        let data = ret.get_data();
-                        return data.clone();
-                    }),
+                    },
                     _ => unimplemented!(),
                 };
-                // let fn_ret = func.outputs.iter().map(|_| 0u128);
-                // TODO let fn_ret = func.outputs.iter().map(|_| revm::primitives::U256::ZERO);
+
+                let mut outputs = func.outputs.iter();
+                let (output, fn_ret) = if let Some(output) = outputs.next() {
+                    let output: proc_macro2::TokenStream = internal_to_type(&output.type_type).parse().unwrap();
+                    if outputs.next().is_some() {
+                        return syn::Error::new_spanned(
+                            lit_str.clone(), 
+                            "cannot use > 1 output param"
+                        ).to_compile_error();
+                    }
+
+                    // let fn_ret = func.outputs.iter().map(|_| 0u128);
+                    // TODO let fn_ret = func.outputs.iter().map(|_| revm::primitives::U256::ZERO);
+                    // let output = func.outputs[0];
+                    (
+                        quote! {
+                            // TODO once we support non U256 types
+                            // stringify!(#output)
+                            U256
+                        },
+                        quote! {
+                            let data = ret.get_data();
+                            U256::from_be_bytes::<32>(abi_decode(data, vec![AbiType::Uint]).try_into().unwrap())
+                        }
+                    )
+                } else {
+                    (
+                        quote! { () },
+                        proc_macro2::TokenStream::new()
+                    )
+                };
 
                 quote! {
                     #[allow(clippy::unused_unit)]
@@ -216,6 +239,7 @@ pub fn solidity(input: TokenStream) -> TokenStream {
                         #fn_call
 
                         // (#(#fn_ret),*)
+                        #fn_ret
                     }
                     // pub fn #meth_name() {}
                 }
