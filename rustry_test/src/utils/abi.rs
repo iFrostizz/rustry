@@ -96,7 +96,7 @@ pub fn abi_encode_signature(signature: &str, values: Vec<Vec<u8>>) -> Vec<u8> {
     let sig_inner = &signature[(par_pos + 1)..(signature.len() - 1)];
     let sig = get_sig(signature);
 
-    let types = if sig_inner.contains(',') {
+    let types = if !sig_inner.is_empty() {
         sig_inner
             .split(',')
             .enumerate()
